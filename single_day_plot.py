@@ -61,7 +61,7 @@ plt.plot(time_101, voltage_101, label='Device 101 Voltage (V)', color='blue')
 plt.plot(time_101, current_101, label='Device 101 Current (A)', color='red')
 plt.plot(time_103, voltage_103, label='Device 103 Voltage (V)', color='blue', linestyle='--')
 plt.plot(time_103, current_103, label='Device 103 Current (A)', color='red', linestyle='--')
-
+plt.title(f'Panels Voltage and Current on Day {input_2} of 20{input_1}')
 plt.xlabel('Time of the Day')
 plt.ylabel('Voltage (V) and Current (A)')
 plt.legend(loc = 'best')
