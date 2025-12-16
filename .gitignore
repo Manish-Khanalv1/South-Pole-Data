@@ -1,9 +1,9 @@
 # add git ignore file format
 # ignore the png files
-*.png
+# *.png
 
 #ignore the csv files
-*.csv
+# *.csv
 
 #ignore the xlsx files
 *.xlsx
