@@ -56,11 +56,15 @@ voltage_103 = file_103['V']
 current_103 = file_103['A'] 
 
 #Create a figure and axis objects
+kwargs_101 = {'marker' : 'o', 's' : 2}
+kwargs_103 = {'marker' : '^', 's' : 2}
 plt.figure(figsize=(12, 6))
-plt.plot(time_101, voltage_101, label='Device 101 Voltage (V)', color='blue')
-plt.plot(time_101, current_101, label='Device 101 Current (A)', color='red')
-plt.plot(time_103, voltage_103, label='Device 103 Voltage (V)', color='blue', linestyle='--')
-plt.plot(time_103, current_103, label='Device 103 Current (A)', color='red', linestyle='--')
+plt.scatter(time_101, voltage_101, label='Device 101 Voltage (V)', color='blue', **kwargs_101)
+plt.scatter(time_101, current_101, label='Device 101 Current (A)', color='red', **kwargs_101)
+plt.scatter(time_103, voltage_103, label='Device 103 Voltage (V)', color='green', **kwargs_103)
+plt.scatter(time_103, current_103, label='Device 103 Current (A)', color='orange', **kwargs_103)
+print(f"DEBUG: Length of timestamp 101: {len(time_101)}")
+print(f"DEBUG: Length of timestamp 103: {len(time_103)}")
 plt.title(f'Panels Voltage and Current on Day {input_2} of 20{input_1}')
 plt.xlabel('Time of the Day')
 plt.ylabel('Voltage (V) and Current (A)')
@@ -72,7 +76,7 @@ start, end = ax.get_xlim() # Get the range of the x-axis (e.g., 0 to N)
 ax.set_xticks(np.linspace(0, int(end), 17).astype(int))
 #rotate the x axis labels by 45 degrees
 plt.xticks(rotation=45)
-plt.savefig(f"{OutputPath}/spo_dev101_103_{input_1}_{input_2}_plot.png", bbox_inches='tight', dpi=300,facecolor='white')
+plt.savefig(f"{OutputPath}/spo_dev101_103_{input_1}_{input_2}_plot.png", bbox_inches='tight', dpi=100,facecolor='white')
 plt.show()
 
 
