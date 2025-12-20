@@ -64,8 +64,8 @@ print(f"Average Power 103: {np.mean(power_103):.2f} W")
 print(f"Max Power 101: {np.max(power_101):.2f} W, min: {np.min(power_101):.2f} W")
 print(f"Max Power 103: {np.max(power_103):.2f} W, min: {np.min(power_103):.2f} W")
 #Create a figure and axis objects
-kwargs_101 = {'marker' : 'o', 's' : 2}
-kwargs_103 = {'marker' : '^', 's' : 2}
+kwargs_101 = {'marker' : 'o', 's' : 3}
+kwargs_103 = {'marker' : '^', 's' : 3}
 
 plt.figure(figsize=(12, 6))
 plt.scatter(time_101, voltage_101, label='Device 101 Voltage (V)', color='blue', **kwargs_101)
@@ -109,6 +109,7 @@ ax.set_xticks(np.linspace(0, int(end), 17).astype(int))
 plt.xticks(rotation=45)
 plt.savefig(f"{OutputPath}/power_spo_dev101_103_{input_1}_{input_2}_plot.png", bbox_inches='tight', dpi=100,facecolor='white')
 plt.show()
+
 
 
 
