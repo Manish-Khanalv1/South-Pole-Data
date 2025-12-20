@@ -54,13 +54,19 @@ current_101 = file_101['A']
 time_103 = file_103['Time']
 voltage_103 = file_103['V'] 
 current_103 = file_103['A'] 
-print(f"Average Power 101: {np.mean(voltage_101*current_101)} W")
-print(f"Average Power 103: {np.mean(voltage_103*current_103)} W")
-print(f"Max Power 101: {np.max(voltage_101*current_101)} W, min: {np.min(voltage_101*current_101)} W")
-print(f"Max Power 103: {np.max(voltage_103*current_103)} W, min: {np.min(voltage_103*current_103)} W")
+
+power_101 = voltage_101 * current_101
+power_103 = voltage_103 * current_103
+#print to only 2 decimal places
+print
+print(f"Average Power 101: {np.mean(power_101):.2f} W")
+print(f"Average Power 103: {np.mean(power_103):.2f} W")
+print(f"Max Power 101: {np.max(power_101):.2f} W, min: {np.min(power_101):.2f} W")
+print(f"Max Power 103: {np.max(power_103):.2f} W, min: {np.min(power_103):.2f} W")
 #Create a figure and axis objects
 kwargs_101 = {'marker' : 'o', 's' : 2}
 kwargs_103 = {'marker' : '^', 's' : 2}
+
 plt.figure(figsize=(12, 6))
 plt.scatter(time_101, voltage_101, label='Device 101 Voltage (V)', color='blue', **kwargs_101)
 plt.scatter(time_101, current_101, label='Device 101 Current (A)', color='red', **kwargs_101)
@@ -71,7 +77,7 @@ plt.scatter(time_103, current_103, label='Device 103 Current (A)', color='orange
 plt.title(f'Panels Voltage and Current on Day {input_2} of 20{input_1}')
 plt.xlabel('Time of the Day')
 plt.ylabel('Voltage (V) and Current (A)')
-plt.legend(loc = 'best')
+plt.legend(loc = 'best',markerscale=5)
 plt.grid(True)
 ax = plt.gca()
 start, end = ax.get_xlim() # Get the range of the x-axis (e.g., 0 to N)
@@ -83,14 +89,14 @@ plt.savefig(f"{OutputPath}/spo_dev101_103_{input_1}_{input_2}_plot.png", bbox_in
 plt.show()
 
 plt.figure(figsize=(12, 6))
-plt.scatter(time_101, voltage_101*current_101, label='Device 101 Power', color='blue', **kwargs_101)
-plt.scatter(time_103, voltage_103*current_103, label='Device 103 Voltage (V)', color='green', **kwargs_103)
+plt.scatter(time_101, power_101, label='Device 101 Power', color='blue', **kwargs_101)
+plt.scatter(time_103, power_103, label='Device 103 Power', color='green', **kwargs_103)
 # print(f"DEBUG: Length of timestamp 101: {len(time_101)}")
 # print(f"DEBUG: Length of timestamp 103: {len(time_103)}")
 plt.title(f'Panels Power on Day {input_2} of 20{input_1}')
 plt.xlabel('Time of the Day')
 plt.ylabel('Power [W]')
-plt.legend(loc = 'best')
+plt.legend(loc = 'best',markerscale=5)
 plt.ylim(0,480)
 #y ticks every 50 W
 plt.yticks(np.arange(0, 481, 50))
