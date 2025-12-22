@@ -8,3 +8,4 @@
 #ignore the xlsx files
 *.xlsx
 
+.DS_Store
