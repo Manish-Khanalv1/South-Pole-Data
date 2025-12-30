@@ -4,6 +4,9 @@ import pandas as pd
 from datetime import datetime, timedelta
 import matplotlib.dates as mdates
 import os
+import urllib.request
+
+
 
 # where you want the data to be taken from and where you want to plots to go
 InputPath = 'DataFolder'
@@ -13,6 +16,24 @@ OutputPath = 'PlotsFolder'
 input_1  = input("Enter the last two digit of the year: ")
 input_2  = input("Enter the day of year in format (DDD): ")
 
+# dt = []
+baseurl = 'https://gml.noaa.gov/aftp/data/radiation/baseline/spo'
+year = input_1
+
+dt = []
+iid = '{0:03d}'.format(int(input_2))
+filename = f'{baseurl}/20{year}/spo{year}{iid}.dat'
+print(filename)
+
+try:
+    file = urllib.request.urlopen(filename)
+    data = file.read().decode('utf-8').split('\n')
+    df = pd.DataFrame([row.split() for row in data[2:]])
+    dt.append(df)  
+except urllib.error.HTTPError:
+    print(f"{filename} file not found")
+print(dt)
+# '''
 #Read the CSV files based on user input
 file_101 = pd.read_csv(f"{InputPath}/spo_dev101_{input_1}_{input_2}.csv",delimiter=',')
 file_103 = pd.read_csv(f"{InputPath}/spo_dev103_{input_1}_{input_2}.csv",delimiter=',')
@@ -111,5 +132,5 @@ plt.savefig(f"{OutputPath}/power_spo_dev101_103_{input_1}_{input_2}_plot.png", b
 plt.show()
 
 
-
+# '''
 
