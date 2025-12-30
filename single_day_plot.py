@@ -20,19 +20,45 @@ input_2  = input("Enter the day of year in format (DDD): ")
 baseurl = 'https://gml.noaa.gov/aftp/data/radiation/baseline/spo'
 year = input_1
 
-dt = []
-iid = '{0:03d}'.format(int(input_2))
-filename = f'{baseurl}/20{year}/spo{year}{iid}.dat'
-print(filename)
+NOAA = []
+for i in [ int(input_2) - 1, int(input_2)]:
+    dt = []
+    
+    iid = '{0:03d}'.format(i)
+    filename = f'{baseurl}/20{year}/spo{year}{iid}.dat'
 
-try:
-    file = urllib.request.urlopen(filename)
-    data = file.read().decode('utf-8').split('\n')
-    df = pd.DataFrame([row.split() for row in data[2:]])
-    dt.append(df)  
-except urllib.error.HTTPError:
-    print(f"{filename} file not found")
-print(dt)
+
+
+    print(filename)
+
+    try:
+        file = urllib.request.urlopen(filename)
+        data = file.read().decode('utf-8').split('\n')
+        df = pd.DataFrame([row.split() for row in data[2:]])
+        dt.append(df)  
+        print(dt)
+        NOAA.append(df)
+    except urllib.error.HTTPError:
+        print(f"{filename} file not found")
+    
+print('dir Irradiance data time correction')
+NOAAdir_ir_1 = NOAA[0][12]
+NOAAdir_ir_2 = NOAA[1][12]
+
+NZDTdir_ir= pd.concat([NOAAdir_ir_1.iloc[660:1440], NOAAdir_ir_2.iloc[0:660]], axis = 0)
+print(NZDTdir_ir)
+
+print('diff Irradiance data time correction')
+NOAAdiff_ir_1 = NOAA[0][14]
+NOAAdiff_ir_2 = NOAA[1][14]
+
+NZDTdiff_ir= pd.concat([NOAAdiff_ir_1.iloc[660:1440], NOAAdiff_ir_2.iloc[0:660]], axis = 0)
+print(NZDTdiff_ir)
+
+    
+
+
+
 # '''
 #Read the CSV files based on user input
 file_101 = pd.read_csv(f"{InputPath}/spo_dev101_{input_1}_{input_2}.csv",delimiter=',')
