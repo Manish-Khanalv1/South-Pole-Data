@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import matplotlib.dates as mdates
 import os
 import urllib.request
-
+import random
 
 
 # where you want the data to be taken from and where you want to plots to go
@@ -28,7 +28,7 @@ year = input_1 # last two digits of the year (from input_1)
 NOAA = [] #list to hold dataframes
 for i in [ int(input_2) - 1, int(input_2)]: #previous day and current day to match the NZDT time and GMT time
     iid = '{0:03d}'.format(i) #format day of year to 3 digits (if Jan 1st, it should be 001, and so on)
-    filename = f'{baseurl}/20{int(year)-2}/spo{int(year)-2}{iid}.dat' #construct the full filename
+    filename = f'{baseurl}/20{int(year)}/spo{int(year)}{iid}.dat' #construct the full filename
     print(filename) #print the filename being accessed
 
     try:
@@ -42,6 +42,7 @@ for i in [ int(input_2) - 1, int(input_2)]: #previous day and current day to mat
         print(f"{filename} file not found") #print error if file not found
     
 # print('dir Irradiance data time correction')
+'''Direct Irradiance'''
 #define the direct irradiance and diffuse irradiance data with time correction for NZDT
 NOAAdir_ir_1 = NOAA[0][12]
 NOAAdir_ir_2 = NOAA[1][12]
@@ -52,10 +53,14 @@ NZDTdir_ir= pd.concat([NOAAdir_ir_1.iloc[660:1440], NOAAdir_ir_2.iloc[0:660]], a
 NZDTdir_ir = NZDTdir_ir.astype(float)
 #remove nan values from NZDTdir_ir 
 NZDTdir_ir[NZDTdir_ir == -9999.9] = np.nan
+# NZDTdir_ir = np.array([random.randint(950, 1000) for _ in range(1440)]) # Generate a random integer between 950 and 1050
+# NZDTdir_ir = NZDTdir_ir.astype(float)
+# print(len(NZDTdir_ir))
 
 # print(NZDTdir_ir)
 
 # print('diff Irradiance data time correction')
+''' Diffuse irradiance'''
 #diffuse irradiance
 NOAAdiff_ir_1 = NOAA[0][14]
 NOAAdiff_ir_2 = NOAA[1][14]
@@ -66,7 +71,10 @@ NZDTdiff_ir = NZDTdiff_ir.astype(float) #convert this to float
 
 #remove nan values from NZDTdiff_ir 
 NZDTdiff_ir[NZDTdiff_ir == -9999.9] = np.nan #remove nan values
+# NZDTdiff_ir = np.array([random.randint(250, 350) for _ in range(1440)]) # Generate a random integer between 250 and 400
+# NZDTdiff_ir = NZDTdiff_ir.astype(float) #convert this to float
 
+''' Upwelling irradiance'''
 #upwelling irradiance
 NOAAup_ir_1 = NOAA[0][10] 
 NOAAup_ir_2 = NOAA[1][10]
@@ -74,6 +82,10 @@ NZDTup_ir= pd.concat([NOAAup_ir_1.iloc[660:1440], NOAAup_ir_2.iloc[0:660]], axis
 NZDTup_ir = NZDTup_ir.astype(float)
 #remove nan values from NZDTup_ir 
 NZDTup_ir[NZDTup_ir == -9999.9] = np.nan
+# NZDTup_ir = np.array([random.randint(500, 600) for _ in range(1440)]) # Generate a random integer between 50 and 150
+# NZDTup_ir = NZDTup_ir.astype(float)
+
+'''Time List'''
 # print(NZDTdiff_ir)
 # Create a range of timestamps with a frequency of 1 minute ('min')
 times_list = pd.date_range("00:00:00", periods=1440, freq="min")
@@ -99,39 +111,39 @@ solar_angle =  [np.cos(np.radians(-23.44*np.cos(np.radians(360*((x/1440)+182+int
              *np.cos(((((x / 1440) + 182+int(input_2))%1)*2*np.pi)) for x in range(1440)] 
 
 solar_angle = np.array(solar_angle) #convert to numpy array
+solar_angle101 = np.concatenate((solar_angle[720:1440],solar_angle[0:720]))
+solar_angle103  = np.concatenate((solar_angle[360:1440],solar_angle[0:360]))
 
 '''Simulated Power Calculation
 A simple model to simulate power based on solar angle and irradiance
 This need to be verified and improved, I have made some assumptions here about efficiency, and the formula is very basic'''
-def simulated_power(rel_angle, dir,diff,up):
-    # A simple model to simulate power based on solar angle and irradiance
-    a = 0
-    b = 360
-    c = 1080
-    d = 1440
-    solar_angle1 = rel_angle[a:b] # 0 to 6 hr
-    solar_angle2 = rel_angle[b:c] # 6 to 18 hr
-    solar_angle3 = rel_angle[c:d] # 18 to 24 hr
-
-    eff_dir = 0.15  # Assume 15% efficiency
-    eff_diff = 0.05  # Assume 5% efficiency for diffuse
-    eff_upwelling = 0.08  # Assume 8% efficiency for upwelling
-    eff_back = 0.30  # Assume 30% efficiency for back side
-    area = 2.0  # Assume 2 square meter panel
-
-    """Calculate power for two different panel orientations
-    Documentation on this will be added later"""
-    power1 = (solar_angle1 * (dir[0:360]*eff_dir)+diff[0:360] * eff_diff + up[0:360] * eff_upwelling)*area + (diff[0:360] * eff_diff + up[0:360] * eff_upwelling)*area*eff_back
-    power2 = (-solar_angle2 * (dir[360:1080]*eff_dir)+diff[360:1080] * eff_diff + up[360:1080] * eff_upwelling)*area*eff_back + (diff[360:1080] * eff_diff + up[360:1080] * eff_upwelling)*area
-    power3 = (solar_angle3 * (dir[1080:1440]*eff_dir)+diff[1080:1440] * eff_diff + up[1080:1440] * eff_upwelling)*area+ (diff[1080:1440] * eff_diff + up[1080:1440] * eff_upwelling)*area*eff_back
-
-    power11 = (-solar_angle2 * (dir[0:720]*eff_dir)+diff[0:720] * eff_diff + up[0:720] * eff_upwelling)*area + (diff[0:720] * eff_diff + up[0:720] * eff_upwelling)*area*eff_back
-    power22 = (solar_angle3 * (dir[720:1080]*eff_dir)+diff[720:1080] * eff_diff + up[720:1080] * eff_upwelling)*area*eff_back+ (diff[720:1080] * eff_diff + up[720:1080] * eff_upwelling)*area
-    power33 = (solar_angle1 * (dir[1080:1440]*eff_dir)+diff[1080:1440] * eff_diff + up[1080:1440] * eff_upwelling)*area+ (diff[1080:1440] * eff_diff + up[1080:1440] * eff_upwelling)*area*eff_back
-    print('101',len(power1), len(power2), len(power3))
-    print('103',len(power11), len(power22), len(power33))
-    #Return concatenated power arrays for both panel orientations [0] for device 101 and [1] for device 103
-    return np.concatenate([power1, power2, power3]), np.concatenate([power11, power22, power33])
+def simulated_power(angle,dir, diff, up):
+     
+     eff_dir = 0.15  # Assume 15% efficiency
+     eff_diff = 0.05  # Assume 5% efficiency for diffuse
+     eff_upwelling = 0.08  # Assume 8% efficiency for upwelling
+     eff_back = 0.70  # Assume 70% efficiency for back side
+     area = 2.0  # Assume 2 square meter panel
+     
+     eff_ir_towards = (abs(angle)*eff_dir*dir + diff*eff_diff + up*eff_upwelling)*area
+     eff_ir_away = (diff*eff_diff + up*eff_upwelling)*area
+     
+     power = []
+     
+     #  zip() to loop through the pre-calculated arrays step-by-step
+     for a, ir_towards, ir_away in zip(angle, eff_ir_towards, eff_ir_away):
+        if a < 0:
+            # Sun hits BACK side.
+            # Back gets the ir_towards and scaled by eff_back
+            p_instant = np.clip((ir_towards * eff_back),0,262) + np.clip((ir_away),0,145)
+        else:
+            # Sun hits FRONT side.
+            # Front gets ir_towards
+            p_instant = np.clip((ir_towards),0,375) + np.clip((ir_away * eff_back),0,112)
+            
+        power.append(p_instant)
+        
+     return power
 
 
 # print(simulated_power(solar_angle, NZDTdir_ir, NZDTdiff_ir, NZDTup_ir))
@@ -182,36 +194,46 @@ current_103 = file_103['A']
 
 power_101 = voltage_101 * current_101
 power_103 = voltage_103 * current_103
+
+sim_power101 = simulated_power(solar_angle101, NZDTdir_ir, NZDTdiff_ir, NZDTup_ir)
+sim_power103 = simulated_power(solar_angle103, NZDTdir_ir, NZDTdiff_ir, NZDTup_ir)
+
 #print to only 2 decimal places
-print
+print('--- Actual Power Statistics ---')
 print(f"Average Power 101: {np.mean(power_101):.2f} W")
 print(f"Average Power 103: {np.mean(power_103):.2f} W")
 print(f"Max Power 101: {np.max(power_101):.2f} W, min: {np.min(power_101):.2f} W")
 print(f"Max Power 103: {np.max(power_103):.2f} W, min: {np.min(power_103):.2f} W")
+print('--- Simulated Power Statistics ---')
+print(f"Average Simulated Power 101: {np.nanmean(sim_power101):.2f} W")
+print(f"Average Simulated Power 103: {np.nanmean(sim_power103):.2f} W")
+print(f"Max Simulated Power 101: {np.nanmax(sim_power101):.2f} W, min: {np.nanmin(sim_power101):.2f} W")
+print(f"Max Simulated Power 103: {np.nanmax(sim_power103):.2f} W, min: {np.nanmin(sim_power103):.2f} W")
+
 #Create a figure and axis objects
 kwargs_101 = {'marker' : 'o', 's' : 3}
 kwargs_103 = {'marker' : '^', 's' : 3}
 
-plt.figure(figsize=(12, 6))
-plt.scatter(time_101, voltage_101, label='Device 101 Voltage (V)', color='blue', **kwargs_101)
-plt.scatter(time_101, current_101, label='Device 101 Current (A)', color='red', **kwargs_101)
-plt.scatter(time_103, voltage_103, label='Device 103 Voltage (V)', color='green', **kwargs_103)
-plt.scatter(time_103, current_103, label='Device 103 Current (A)', color='orange', **kwargs_103)
-# print(f"DEBUG: Length of timestamp 101: {len(time_101)}")
-# print(f"DEBUG: Length of timestamp 103: {len(time_103)}")
-plt.title(f'Panels Voltage and Current on Day {input_2} of 20{input_1}')
-plt.xlabel('Time of the Day')
-plt.ylabel('Voltage (V) and Current (A)')
-plt.legend(loc = 'best',markerscale=5)
-plt.grid(True)
-ax = plt.gca()
-start, end = ax.get_xlim() # Get the range of the x-axis (e.g., 0 to N)
-# Select 15 evenly spaced integers across the range
-ax.set_xticks(np.linspace(0, int(end), 12).astype(int))
-#rotate the x axis labels by 45 degrees
-plt.xticks(rotation=45)
-plt.savefig(f"{OutputPath}/spo_dev101_103_{input_1}_{input_2}_plot.png", bbox_inches='tight', dpi=100,facecolor='white')
-plt.show()
+# plt.figure(figsize=(12, 6))
+# plt.scatter(time_101, voltage_101, label='Device 101 Voltage (V)', color='blue', **kwargs_101)
+# plt.scatter(time_101, current_101, label='Device 101 Current (A)', color='red', **kwargs_101)
+# plt.scatter(time_103, voltage_103, label='Device 103 Voltage (V)', color='green', **kwargs_103)
+# plt.scatter(time_103, current_103, label='Device 103 Current (A)', color='orange', **kwargs_103)
+# # print(f"DEBUG: Length of timestamp 101: {len(time_101)}")
+# # print(f"DEBUG: Length of timestamp 103: {len(time_103)}")
+# plt.title(f'Panels Voltage and Current on Day {input_2} of 20{input_1}')
+# plt.xlabel('Time of the Day')
+# plt.ylabel('Voltage (V) and Current (A)')
+# plt.legend(loc = 'best',markerscale=5)
+# plt.grid(True)
+# ax = plt.gca()
+# start, end = ax.get_xlim() # Get the range of the x-axis (e.g., 0 to N)
+# # Select 15 evenly spaced integers across the range
+# ax.set_xticks(np.linspace(0, int(end), 12).astype(int))
+# #rotate the x axis labels by 45 degrees
+# plt.xticks(rotation=45)
+# plt.savefig(f"{OutputPath}/spo_dev101_103_{input_1}_{input_2}_plot.png", bbox_inches='tight', dpi=100,facecolor='white')
+# plt.show()
 
 '''Multi-panel Plot: Irradiance and Power
 Creating a multi-panel plot with irradiance on the top and power on the bottom
@@ -223,6 +245,7 @@ plt.figure(figsize=(12, 10))
 plt.subplot(2, 1, 1)
 plt.plot(NOAA_time, NZDTdir_ir, label='Direct', color='red',linestyle='--')
 plt.plot(NOAA_time, NZDTdiff_ir, label='Diffuse', color='orange')
+plt.plot(NOAA_time, NZDTup_ir, label='Upwelling', color='black',linestyle='-.')
 plt.title(f'Solar Irradiance and Panel Power on Day {input_2} of $20{input_1}$')
 plt.ylabel('Irradiance W/m^$2$')
 ax = plt.gca()
@@ -259,11 +282,10 @@ plt.xticks(rotation=45)
 
 # --- Bottom Right: Simulated Power ---
 ax_right = plt.subplot(2, 2, 4, sharey=ax_left)
-sim_results = simulated_power(solar_angle, NZDTdir_ir, NZDTdiff_ir, NZDTup_ir)
-plt.plot(NOAA_time, sim_results[0], label='Simulated 101', color='blue', linestyle='--')
-plt.plot(NOAA_time, sim_results[1], label='Simulated 103', color='green')
+# sim_results = simulated_power(solar_angle, NZDTdir_ir, NZDTdiff_ir, NZDTup_ir)
+plt.plot(NOAA_time, sim_power101, label='Simulated 101', color='blue', linestyle='--')
+plt.plot(NOAA_time, sim_power103, label='Simulated 103', color='green')
 plt.xlabel('Time of the Day')
-plt.ylabel('Power [W]')
 ax = plt.gca()
 start, end = ax.get_xlim() # Get the range of the x-axis (e.g., 0 to N)
 # Select 15 evenly spaced integers across the range
@@ -272,19 +294,27 @@ ax.set_xticks(np.linspace(0, int(end), 12).astype(int))
 #rotate the x axis labels by 45 degrees
 plt.xticks(rotation=45)
 plt.legend(loc='best')
-plt.ylim(0, 480)
+plt.ylim(0, 550)
 plt.grid(True)
 plt.xticks(rotation=45)
 plt.setp(ax_right.get_yticklabels(), visible=False)
 plt.text('02:00:00', 465, 'Simulated', horizontalalignment='center', verticalalignment='top', fontsize=15, color='red')
-
+# plt.text('23:30:00', 490, f'Avg 101: {np.nanmean(sim_power101):.2f} Avg 103: {np.nanmean(sim_power103):.2f}', horizontalalignment='right', 
+#          verticalalignment='bottom', fontsize=10, color='black')
 ax_right.set_ylabel('')
 # Global layout adjustments
 plt.tight_layout()
 # plt.subplots_adjust(wspace=0)
+plt.savefig(f"{OutputPath}/irradiance_power_{input_1}_{input_2}_plot.png", 
+            bbox_inches='tight', 
+            dpi=100, 
+            facecolor='white')
 plt.show()
 
-'''Nothing below this is needed, kept for reference'''
+
+'''
+Nothing below this is needed, kept for reference
+'''
 # Save the multi-panel figure
 # plt.savefig(f"{OutputPath}/power_irradiance_combined_{input_1}_{input_2}_plot.png", 
 #             bbox_inches='tight', 
