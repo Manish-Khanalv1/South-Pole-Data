@@ -199,16 +199,39 @@ sim_power101 = simulated_power(solar_angle101, NZDTdir_ir, NZDTdiff_ir, NZDTup_i
 sim_power103 = simulated_power(solar_angle103, NZDTdir_ir, NZDTdiff_ir, NZDTup_ir)
 
 #print to only 2 decimal places
-print('--- Actual Power Statistics ---')
-print(f"Average Power 101: {np.mean(power_101):.2f} W")
-print(f"Average Power 103: {np.mean(power_103):.2f} W")
-print(f"Max Power 101: {np.max(power_101):.2f} W, min: {np.min(power_101):.2f} W")
-print(f"Max Power 103: {np.max(power_103):.2f} W, min: {np.min(power_103):.2f} W")
-print('--- Simulated Power Statistics ---')
-print(f"Average Simulated Power 101: {np.nanmean(sim_power101):.2f} W")
-print(f"Average Simulated Power 103: {np.nanmean(sim_power103):.2f} W")
-print(f"Max Simulated Power 101: {np.nanmax(sim_power101):.2f} W, min: {np.nanmin(sim_power101):.2f} W")
-print(f"Max Simulated Power 103: {np.nanmax(sim_power103):.2f} W, min: {np.nanmin(sim_power103):.2f} W")
+# print('--- Actual Power Statistics ---')
+# print(f"Average Power 101: {np.mean(power_101):.2f} W")
+# print(f"Average Power 103: {np.mean(power_103):.2f} W")
+# print(f"Max Power 101: {np.max(power_101):.2f} W, min: {np.min(power_101):.2f} W")
+# print(f"Max Power 103: {np.max(power_103):.2f} W, min: {np.min(power_103):.2f} W")
+# print('--- Simulated Power Statistics ---')
+# print(f"Average Simulated Power 101: {np.nanmean(sim_power101):.2f} W")
+# print(f"Average Simulated Power 103: {np.nanmean(sim_power103):.2f} W")
+# print(f"Max Simulated Power 101: {np.nanmax(sim_power101):.2f} W, min: {np.nanmin(sim_power101):.2f} W")
+# print(f"Max Simulated Power 103: {np.nanmax(sim_power103):.2f} W, min: {np.nanmin(sim_power103):.2f} W")
+
+# The format should be:
+# Device | Avg | Min | Max |
+# 101 | ... | ...| ...|
+# 103 | ...| ...| ... |
+print()
+print()
+print('OBSERVED                     [WATTS]')
+print('------------------------------------')
+print(f'Device |   Avg  |   Min  |   Max  |')
+print(f'  101  | {np.mean(power_101):.2f} |  {np.min(power_101):.2f} | {np.max(power_101):.2f} |')
+print(f'  103  | {np.mean(power_103):.2f} |  {np.min(power_103):.2f} | {np.max(power_103):.2f} |')
+print('------------------------------------')
+print('SIMULATED                    [WATTS]')
+print('------------------------------------')
+print(f'Device |   Avg  |   Min   |   Max  |')
+print(f'  101  | {np.nanmean(sim_power101):.2f} |  {np.nanmin(sim_power101):.2f} | {np.nanmax(sim_power101):.2f} |')
+print(f'  103  | {np.nanmean(sim_power103):.2f} |  {np.nanmin(sim_power103):.2f} | {np.nanmax(sim_power103):.2f} |')
+print('------------------------------------')
+print()
+print()
+
+
 
 #Create a figure and axis objects
 kwargs_101 = {'marker' : 'o', 's' : 3}
