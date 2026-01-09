@@ -216,6 +216,8 @@ sim_power103 = simulated_power(solar_angle103, NZDTdir_ir, NZDTdiff_ir, NZDTup_i
 # 103 | ...| ...| ... |
 print()
 print()
+print(f'DAY: {input_2}')
+print()
 print('OBSERVED                     [WATTS]')
 print('------------------------------------')
 print(f'Device |   Avg  |   Min  |   Max  |')
