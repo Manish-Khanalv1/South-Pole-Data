@@ -20,11 +20,73 @@ def date2num(date_str): # Renamed 'date' to 'date_str' to avoid confusion with t
 
 
 year = input('Enter last 2 digits of the year: ')
-StartDay = int(input('                   Starting Day: '))
-EndDay = int(input('                     Ending Day: '))
+StartDay = int(input('Starting Day: '))
+EndDay = int(input('Ending Day: '))
 
-DayRange =  EndDay - StartDay
+day_range =  np.arange(StartDay, EndDay + 1)
+day_range = ['{0:03d}'.format(i) for i in day_range]
+print(day_range)
 
+all_data_101 = []
+all_data_103 = []
+for i in day_range:
+    try:
+        file101 = pd.read_csv(f"DataFolder/spo_dev101_{year}_{i}.csv")
+        file103 = pd.read_csv(f"DataFolder/spo_dev103_{year}_{i}.csv")
+    except FileNotFoundError:
+        print(f"File for day {i} not found. Skipping this day.")
+        continue
+    file101.rename(columns = {'Device ID': 'V', 'Voltage': 'A'}, inplace=True)
+    file103.rename(columns = {'Device ID': 'V', 'Voltage': 'A'}, inplace=True)
+    date_101 = file101['Date']
+    NumberDate = date_101.apply(date2num)
+    mask_to_keep =  NumberDate <= int(i)
+    file101 = file101[mask_to_keep]
+
+    date_103 = file103['Date']
+    NumberDate = date_103.apply(date2num)
+    mask_to_keep = NumberDate <= int(i)
+    file103 = file103[mask_to_keep]
+
+    all_data_101.append(file101)
+    all_data_103.append(file103)
+#convert list of dataframes to a single dataframe
+combined_101 = pd.concat(all_data_101, ignore_index=True)
+combined_103 = pd.concat(all_data_103, ignore_index=True)
+print(combined_101[:-10])
+#plot for different days
+time_101 = combined_101['Time']
+voltage_101 = combined_101['V'] 
+current_101 = combined_101['A']
+
+time_103 = combined_103['Time']
+voltage_103 = combined_103['V'] 
+current_103 = combined_103['A']
+
+power_101 = voltage_101 * current_101
+power_103 = voltage_103 * current_103
+
+dates_101 = combined_101['Date']
+dates_103 = combined_103['Date']
+#combine date and time to a single datetime object
+datetime_101 = [datetime.strptime(d + ' ' + t, '%Y-%m-%d %H:%M:%S') for d, t in zip(dates_101, time_101)]
+datetime_103 = [datetime.strptime(d + ' ' + t, '%Y-%m-%d %H:%M:%S') for d, t in zip(dates_103, time_103)]
+
+
+#date in x-axis in format mm-dd HH:MM
+plt.figure(figsize=(15, 6))
+plt.scatter(datetime_101, power_101, label='Device 101 Power (W)', color='blue', s=2)
+plt.scatter(datetime_103, power_103, label='Device 103 Power (W)', color='green', s=2)
+plt.xlabel('Date')
+plt.ylabel('Power (W)')
+plt.title(f'Power vs Time from Day {StartDay} to Day {EndDay} of 20{year}')
+plt.legend()
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.savefig(f"MultiDayPlotsFolder/MultipledayPlots_20{year}_{StartDay}_to_{EndDay}.png")
+
+plt.show()
+'''
 Days_101 = []
 Days_103 = []
 for i in range(DayRange):
@@ -74,7 +136,7 @@ for i in range(DayRange):
         
     plt.plot(TimeData, PowerData)
 plt.savefig(f"MultiDayPlotsFolder/MultipledayPlots")
-
+'''
 
 
 
