@@ -1,6 +1,7 @@
 #impoting necessary libraries
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 import pandas as pd
 from datetime import datetime, timedelta
 import matplotlib.dates as mdates
@@ -11,7 +12,7 @@ import random
 
 # where you want the data to be taken from and where you want to plots to go
 InputPath = 'DataFolder'
-OutputPath = 'PlotsFolder'
+OutputPath = 'PlotsFolder/Test'
 
 #Take input for year(YY) and day of year(DDD)
 input_1  = input("Enter the last two digit of the year: ")
@@ -40,7 +41,7 @@ for i in [ int(input_2) - 1, int(input_2)]: #previous day and current day to mat
         NOAA.append(df) #append dataframe to list
     except urllib.error.HTTPError:
         print(f"{filename} file not found") #print error if file not found
-    
+
 # print('dir Irradiance data time correction')
 '''Direct Irradiance'''
 #define the direct irradiance and diffuse irradiance data with time correction for NZDT
@@ -121,7 +122,7 @@ def simulated_power(angle,dir, diff, up):
      
      eff_dir = 0.15  # Assume 15% efficiency
      eff_diff = 0.05  # Assume 5% efficiency for diffuse
-     eff_upwelling = 0.08  # Assume 8% efficiency for upwelling
+     eff_upwelling = 0.08   # Assume 8% efficiency for upwelling
      eff_back = 0.70  # Assume 70% efficiency for back side
      area = 2.0  # Assume 2 square meter panel
      
@@ -276,7 +277,7 @@ plt.ylabel('Irradiance W/m^$2$')
 ax = plt.gca()
 start, end = ax.get_xlim() # Get the range of the x-axis (e.g., 0 to N)
 # Select 15 evenly spaced integers across the range
-ax.set_xticks(np.linspace(0, int(end), 18).astype(int))
+ax.set_xticks(np.linspace(0, int(end), 12).astype(int))
 #rotate the x axis labels by 45 degrees
 plt.xticks(rotation=45)
 plt.ylim(0, 1100)
@@ -287,7 +288,7 @@ plt.xticks(rotation=45)
 
 # --- Bottom Left: Actual Power ---
 #set the figure size
-ax_left = plt.subplot(2, 2, 3)
+ax_left = plt.subplot(2, 1, 2)
 plt.scatter(time_101, power_101, label='Device 101', color='blue', **kwargs_101)
 plt.scatter(time_103, power_103, label='Device 103', color='green', **kwargs_103)
 plt.xlabel('Time of the Day')
@@ -306,31 +307,36 @@ plt.grid(True)
 plt.xticks(rotation=45)
 
 # --- Bottom Right: Simulated Power ---
-ax_right = plt.subplot(2, 2, 4, sharey=ax_left)
-# sim_results = simulated_power(solar_angle, NZDTdir_ir, NZDTdiff_ir, NZDTup_ir)
-plt.plot(NOAA_time, sim_power101, label='Model 101', color='blue', linestyle='--')
-plt.plot(NOAA_time, sim_power103, label='Model 103', color='green')
-plt.xlabel('Time of the Day')
-ax = plt.gca()
-start, end = ax.get_xlim() # Get the range of the x-axis (e.g., 0 to N)
-# Select 15 evenly spaced integers across the range
-ax.set_xticks(np.linspace(0, int(end), 12).astype(int))
+# ax_right = plt.subplot(2, 2, 4, sharey=ax_left)
+# # sim_results = simulated_power(solar_angle, NZDTdir_ir, NZDTdiff_ir, NZDTup_ir)
+# plt.plot(NOAA_time, sim_power101, label='Simulated 101', color='blue', linestyle='--')
+# plt.plot(NOAA_time, sim_power103, label='Simulated 103', color='green')
+# plt.xlabel('Time of the Day')
+# ax = plt.gca()
+# start, end = ax.get_xlim() # Get the range of the x-axis (e.g., 0 to N)
+# # Select 15 evenly spaced integers across the range
+# ax.set_xticks(np.linspace(0, int(end), 12).astype(int))
 
-#rotate the x axis labels by 45 degrees
-plt.xticks(rotation=45)
-plt.legend(loc='best')
-plt.ylim(0, 550)
-plt.grid(True)
-plt.xticks(rotation=45)
-plt.setp(ax_right.get_yticklabels(), visible=False)
-plt.text('02:00:00', 465, 'Model', horizontalalignment='center', verticalalignment='top', fontsize=15, color='red')
-# plt.text('23:30:00', 490, f'Avg 101: {np.nanmean(sim_power101):.2f} Avg 103: {np.nanmean(sim_power103):.2f}', horizontalalignment='right', 
-#          verticalalignment='bottom', fontsize=10, color='black')
-ax_right.set_ylabel('')
-# Global layout adjustments
-plt.tight_layout()
-# plt.subplots_adjust(wspace=0)
-plt.savefig(f"{OutputPath}/irradiance_power_{input_1}_{input_2}_plot.png", 
+# #rotate the x axis labels by 45 degrees
+# plt.xticks(rotation=45)
+# plt.legend(loc='best')
+# plt.ylim(0, 550)
+# plt.grid(True)
+# plt.xticks(rotation=45)
+# plt.setp(ax_right.get_yticklabels(), visible=False)
+# plt.text('02:00:00', 465, 'Simulated', horizontalalignment='center', verticalalignment='top', fontsize=15, color='red')
+# # plt.text('23:30:00', 490, f'Avg 101: {np.nanmean(sim_power101):.2f} Avg 103: {np.nanmean(sim_power103):.2f}', horizontalalignment='right', 
+# #          verticalalignment='bottom', fontsize=10, color='black')
+# ax_right.set_ylabel('')
+# # Global layout adjustments
+# plt.tight_layout()
+# # plt.subplots_adjust(wspace=0)
+
+
+
+
+
+plt.savefig(f"{OutputPath}/irradiance_power_only_{input_1}_{input_2}_plot.png", 
             bbox_inches='tight', 
             dpi=100, 
             facecolor='white')

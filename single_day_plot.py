@@ -1,6 +1,7 @@
 #impoting necessary libraries
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 import pandas as pd
 from datetime import datetime, timedelta
 import matplotlib.dates as mdates
@@ -11,7 +12,7 @@ import random
 
 # where you want the data to be taken from and where you want to plots to go
 InputPath = 'DataFolder'
-OutputPath = 'PlotsFolder'
+OutputPath = 'PlotsFolder/Test'
 
 #Take input for year(YY) and day of year(DDD)
 input_1  = input("Enter the last two digit of the year: ")
@@ -330,6 +331,11 @@ plt.xticks(rotation=45)
 # # Global layout adjustments
 # plt.tight_layout()
 # # plt.subplots_adjust(wspace=0)
+
+
+
+
+
 plt.savefig(f"{OutputPath}/irradiance_power_only_{input_1}_{input_2}_plot.png", 
             bbox_inches='tight', 
             dpi=100, 

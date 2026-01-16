@@ -26,7 +26,7 @@ EndDay = int(input('Ending Day: '))
 day_range =  np.arange(StartDay, EndDay + 1)
 day_range = ['{0:03d}'.format(i) for i in day_range]
 print(day_range)
-
+    
 all_data_101 = []
 all_data_103 = []
 for i in day_range:
@@ -77,14 +77,14 @@ datetime_103 = [datetime.strptime(d + ' ' + t, '%Y-%m-%d %H:%M:%S') for d, t in 
 plt.figure(figsize=(15, 6))
 plt.scatter(datetime_101, power_101, label='Device 101 Power (W)', color='blue', s=2)
 plt.scatter(datetime_103, power_103, label='Device 103 Power (W)', color='green', s=2)
+plt.grid('on')
 plt.xlabel('Date')
 plt.ylabel('Power (W)')
 plt.title(f'Power vs Time from Day {StartDay} to Day {EndDay} of 20{year}')
-plt.legend()
+plt.legend(markerscale=6)
 plt.xticks(rotation=45)
 plt.tight_layout()
 plt.savefig(f"MultiDayPlotsFolder/MultipledayPlots_20{year}_{StartDay}_to_{EndDay}.png")
-
 plt.show()
 '''
 Days_101 = []
@@ -137,46 +137,3 @@ for i in range(DayRange):
     plt.plot(TimeData, PowerData)
 plt.savefig(f"MultiDayPlotsFolder/MultipledayPlots")
 '''
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
