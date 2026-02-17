@@ -8,7 +8,10 @@ import matplotlib.dates as mdates
 import os
 import urllib.request
 import random
+import scipy
+from scipy.ndimage import generic_filter
 
+    
 
 # where you want the data to be taken from and where you want to plots to go
 InputPath = 'DataFolder'
@@ -23,7 +26,7 @@ Construct the base URL for NOAA data'''
 def ImportNOAA(year, day):
     baseurl = 'https://gml.noaa.gov/aftp/data/radiation/baseline/spo'
     
-    
+
     
     NOAA = [] #list to hold dataframes
     for i in [ int(day) - 1, int(day)]: #previous day and current day to match the NZDT time and GMT time
@@ -125,23 +128,180 @@ def ImportNOAA(year, day):
     
     MeanDirIr = np.mean(NZDTdir_ir)
     StdevDirIr = np.std(NZDTdir_ir)
-    return MeanDirIr, StdevDirIr, NZDTdir_ir
-MeanDir345, StdevDir345, dir_ir345 = ImportNOAA(25,345)
-print(MeanDir345)
-print(StdevDir345)
+    return MeanDirIr, StdevDirIr, NZDTdir_ir, NOAA_time
 
-# Now try another day
 
-YearToTry = input('Enter Last 2 digits of year: ')
-DayToTry = input('Enter day number: ')
+def cloudiness(InputYear, InputDay, output):
+    
+        
+    MeanDir345, StdevDir345, dir_ir345, NOAA_time = ImportNOAA(25,345)
+    print(MeanDir345)
+    print(StdevDir345)
+    
+    # Now try another day
+    
+    YearToTry = InputYear
+    DayToTry = InputDay
+    
+    MeanDirTry, StdevDirTry, Dir_irTry, NOAA_time = ImportNOAA(YearToTry, DayToTry)
+    CloudinessMetric = np.zeros(len(Dir_irTry))  # this metric will be a list of 0 for if that part is cloudy, and 1 if it is not
+    
+    # Defining cloudiness from the power value deviation
+    for i, val in enumerate(Dir_irTry):
+        if val < MeanDir345 - 5*StdevDir345:
+            CloudinessMetric[i] = 0
+        else:
+            CloudinessMetric[i] = 1
+    
+    
+    if output == True:
+        plt.figure()
+        plt.figure(figsize=(12, 10))
+        ax = plt.gca()
+        plt.plot(NOAA_time, CloudinessMetric)
+        # plt.plot(range(len(CloudinessMetric)), CloudinessMetric)
+        plt.xlabel('time')
+        plt.ylabel('Metric')
+        plt.title(f'Power difference method day {DayToTry}, year {YearToTry}')
+        start, end = ax.get_xlim() # Get the range of the x-axis (e.g., 0 to N)
+        # Select 15 evenly spaced integers across the range
+        ax.set_xticks(np.linspace(0, int(end), 12).astype(int))
+        plt.savefig('Cloudiness/CloudinessPlot.pdf')
+    
+    # defining cloudiness from smoothing the first method
+    # kernal = [1,0,1]
+    # SmoothedCloudinessMetric = np.convolve(CloudinessMetric, kernal)
+    # SmoothedCouldinessMetric = np.where(SmoothedCloudinessMetric < 1.9, 0, 1)
+    
+    # plt.figure()
+    # plt.plot(range(len(SmoothedCloudinessMetric)), SmoothedCloudinessMetric)
+    # plt.savefig('Cloudiness/SmoothedCloudinessPlot.pdf')
+    
+    
+    
+    
+    # defining cloudiness from the standard deviation of some data
+    # This function takes a given array and window size and returns an array that has been convolved with a kernel that takes the standard deviation of the data that it covers
+    StdevOfTry = generic_filter(Dir_irTry, np.std, size=3)
 
-MeanDirTry, StdevDirTry, Dir_irTry = ImportNOAA(YearToTry, DayToTry)
-CloudinessMetric = np.zeros(len(Dir_irTry))  # this metric will be a list of 1 for if that part is cloudy, and 0 if it is not
-for i, val in enumerate(Dir_irTry):
-    if val < MeanDir345 - 5*StdevDir345:
-        CloudinessMetric[i] = 0
-    else:
-        CloudinessMetric[i] = 1
-plt.plot(range(len(CloudinessMetric)), CloudinessMetric)
-plt.savefig('CoudinessPlot.pdf')
+    # this metic looks if things are far from the mean
+    StdevCloudinessMetric = np.zeros(len(Dir_irTry))
+    for i, val in enumerate(StdevOfTry):
+        if val > 1:
+            StdevCloudinessMetric[i]= 0
+        else:
+            StdevCloudinessMetric[i]=1
+    # find the % of the day that is coverd in clouds
+    if output == True:
+        # plotting
+        plt.figure()
+        plt.figure(figsize=(12, 10))
+        # plt.plot(range(len(StdevOfTry)), StdevOfTry)
+        plt.plot(NOAA_time, StdevOfTry)
+        ax = plt.gca()
+        start, end = ax.get_xlim() # Get the range of the x-axis (e.g., 0 to N)
+        # Select 15 evenly spaced integers across the range
+        ax.set_xticks(np.linspace(0, int(end), 12).astype(int))
+        plt.title(f'Cloudiness (Standard Deviation method) {DayToTry}, year {YearToTry}')
+        plt.ylabel('Standard Deviation [Watts]')
+        plt.xlabel('time')
+        plt.savefig('Cloudiness/StdevMethodPlot.pdf')
+    
+        plt.figure()
+        plt.figure(figsize=(12, 10))
+        # plt.plot(range(len(StdevOfTry)), StdevCloudinessMetric)
+        plt.plot(NOAA_time, StdevCloudinessMetric)
+        ax = plt.gca()
+        start, end = ax.get_xlim() # Get the range of the x-axis (e.g., 0 to N)
+        # Select 15 evenly spaced integers across the range
+        ax.set_xticks(np.linspace(0, int(end), 12).astype(int))
+        plt.title(f'Cloudiness (Standard Deviation method) {DayToTry}, year {YearToTry}')
+        plt.ylabel('Metric [Watts]')
+        plt.xlabel('time')
+        plt.savefig('Cloudiness/StdevMethodCloudinessPlot.pdf')
+    
+    
 
+
+
+
+    # combine methods
+
+    CombinedMetric = np.where(CloudinessMetric + StdevCloudinessMetric<2, 0, 1)
+    if output == True:
+        plt.figure(figsize=(12,10))
+        # plt.plot(range(len(StdevOfTry)), CombinedMetric)
+        plt.plot(NOAA_time, CombinedMetric)
+        ax = plt.gca()
+        start, end = ax.get_xlim() # Get the range of the x-axis (e.g., 0 to N)
+        # Select 15 evenly spaced integers across the range
+        ax.set_xticks(np.linspace(0, int(end), 12).astype(int))
+        plt.title(f'Cloudiness (Val + Stev method) {DayToTry}, year {YearToTry}')
+        plt.ylabel('Metric[Watts]')
+        plt.xlabel('time')
+        plt.savefig('Cloudiness/CombinedMethod.pdf')
+
+    # creat a % for the day of how cloudy it is based on the CombinedMetric
+    ClearAmount = np.sum(CombinedMetric)/len(CombinedMetric)
+
+    if output == True:
+        print(f'Clear percent: {np.round(ClearAmount*100, 2)}%') 
+
+    # # make a average of the direct irradiance every half hour
+    # HalfHourMed = np.zeros(int(len(Dir_irTry)/30))
+    # HalfHourMean = np.zeros(int(len(Dir_irTry)/30))
+    
+  
+    block = 30 # block size in minutes
+    n_HalfHourAvg = len(Dir_irTry)//block #number of data points taking half hour blocks
+    n_Block = block   #number of data points in each block
+    BlockedDir_irTry = np.reshape(Dir_irTry, (n_HalfHourAvg,n_Block))
+    BlockMean = np.nanmean(BlockedDir_irTry, axis = 1)
+    BlockMed = np.nanmedian(BlockedDir_irTry, axis = 1)
+    print()
+    print(f"BlockMean: {BlockMean}")
+    print()
+    print(f"BlockMed: {BlockMed}")
+    print()
+    print(f"BlockMean - BlockMed: {BlockMean - BlockMed}")
+    
+
+    # plot it
+    plt.figure()
+    plt.figure(figsize=(12, 10))
+    plt.plot(range(n_HalfHourAvg), BlockMean, label = 'Mean')
+    plt.plot(range(n_HalfHourAvg), BlockMed, label = 'Med')
+    plt.scatter(range(n_HalfHourAvg), BlockMean, label = 'Mean')
+    plt.scatter(range(n_HalfHourAvg), BlockMed, label = 'Med')
+    plt.legend()
+    plt.title(f'Half Hour Averages {DayToTry}, year {YearToTry}')
+    plt.ylabel('Average [W]')
+    plt.xlabel('time [30 min]')
+    plt.savefig('Cloudiness/HalfHourAverage.pdf')
+    
+    # Do this same thing but for the precentege drop from the max
+    max345 = np.max(dir_ir345)
+    print()
+    print(f"{max345}")
+    print()
+    PercentDropMean = 100*BlockMean/max345
+    PercentDropMed = 100*BlockMed/max345
+
+    # plot it
+    plt.figure()
+    plt.figure(figsize=(12, 10))
+    plt.plot(range(n_HalfHourAvg), PercentDropMean, label = 'Mean')
+    plt.plot(range(n_HalfHourAvg), PercentDropMed, label = 'Med')
+    plt.scatter(range(n_HalfHourAvg), PercentDropMean, label = 'Mean')
+    plt.scatter(range(n_HalfHourAvg), PercentDropMed, label = 'Med')
+    plt.legend()
+    plt.title(f'Half Hour Averages Percent Drop from Maximum Power {DayToTry}, year {YearToTry}')
+    plt.ylabel(' Percent Drop')
+    plt.xlabel('time [30 min]')
+    plt.savefig('Cloudiness/HalfHourPercentFromMax.pdf')
+
+    print(NOAA_time)
+
+year2try = input('Enter the Year to try: ')
+day2try = input('Enter the day to try: ')
+cloudiness(year2try, day2try, output = True)
