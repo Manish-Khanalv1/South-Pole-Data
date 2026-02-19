@@ -44,8 +44,8 @@ year = input('Enter last 2 digits of the year: ')
 StartDay = int(input('Starting Day: '))
 EndDay = int(input('Ending Day: '))
 
-day_range =  np.arange(StartDay, EndDay + 1)
-day_range = ['{0:03d}'.format(i) for i in day_range]
+day_range_num =  np.arange(StartDay, EndDay + 1)
+day_range = ['{0:03d}'.format(i) for i in day_range_num]
 print(day_range)
     
 all_data_101 = []
@@ -117,13 +117,13 @@ i = 0
 for day in all_data_103:
     IntegratedPower_103[i]=trapezoid(day['V'].dropna()*day['A'].dropna(),dx=30)
     i += 1
-IntegratedPower_101 = IntegratedPower_101/(1000*60**2)
-IntegratedPower_103 = IntegratedPower_103/(1000*60**2)
+IntegratedPower_101_kwh = IntegratedPower_101/(1000*60**2)
+IntegratedPower_103_kwh = IntegratedPower_103/(1000*60**2)
 
 # convert day_range into calendar dates for the display
-CalendarDate = np.zeros(len(day_range))
+CalendarDate = []
 for i, day in enumerate(day_range):
-    CalendarDate[i]=num2date(day, year)
+    CalendarDate.append(num2date(day, year))
     
 plt.figure(figsize=(15, 6))
 plt.scatter(CalendarDate, MeanPower_101, label='Device 101 Power (W)', color='blue', s=50)

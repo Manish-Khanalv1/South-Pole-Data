@@ -135,8 +135,8 @@ def cloudiness(InputYear, InputDay, output):
     
         
     MeanDir345, StdevDir345, dir_ir345, NOAA_time = ImportNOAA(25,345)
-    print(MeanDir345)
-    print(StdevDir345)
+    # print(MeanDir345)
+    # print(StdevDir345)
     
     # Now try another day
     
@@ -281,12 +281,14 @@ def cloudiness(InputYear, InputDay, output):
     
     # Do this same thing but for the precentege drop from the max
     max345 = np.max(dir_ir345)
-    print()
-    print(f"{max345}")
-    print()
+    # print()
+    # print(f"{max345}")
+    # print()
     PercentDropMean = 100*BlockMean/max345
     PercentDropMed = 100*BlockMed/max345
-
+    # Give the amount of the day that is cloudy based on this system
+    ClearAmmount_PercDrop = np.where(PercentDropMean > 80, 1, 0)
+    ClearAmmount_PercDrop = np.sum(ClearAmmount_PercDrop)/len(ClearAmmount_PercDrop)
     # plot it
     plt.figure()
     plt.figure(figsize=(12, 10))
@@ -300,8 +302,11 @@ def cloudiness(InputYear, InputDay, output):
     plt.xlabel('time [30 min]')
     plt.savefig('Cloudiness/HalfHourPercentFromMax.pdf')
 
-    print(NOAA_time)
+    # print(NOAA_time)
 
+    ClearFraction = ClearAmmount_PercDrop
+    return ClearFraction
 year2try = input('Enter the Year to try: ')
 day2try = input('Enter the day to try: ')
-cloudiness(year2try, day2try, output = True)
+ClearFraction = cloudiness(year2try, day2try, output = True)
+print(f"{np.round(ClearFraction*100, 2)}% of the day is clear")
