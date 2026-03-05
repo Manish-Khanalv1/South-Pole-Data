@@ -47,7 +47,10 @@ for i in [ int(input_2) - 1, int(input_2)]: #previous day and current day to mat
 #define the direct irradiance and diffuse irradiance data with time correction for NZDT
 NOAAdir_ir_1 = NOAA[0][12]
 NOAAdir_ir_2 = NOAA[1][12]
-
+NOAAtemp = NOAA[0][38]
+# NOAAtemp = np.where(NOAAtemp == -9999.9, 0, 1)
+print(f'NOAAtemp: {NOAAtemp}')
+print(f'NOAAtemp sum: {np.sum(NOAAtemp)}')
 # concatenate the two days data with time correction
 NZDTdir_ir= pd.concat([NOAAdir_ir_1.iloc[660:1440], NOAAdir_ir_2.iloc[0:660]], axis = 0)
 #convert this to float
@@ -265,35 +268,45 @@ kwargs_103 = {'marker' : '^', 's' : 3}
 Creating a multi-panel plot with irradiance on the top and power on the bottom
 '''
 # --- Top Panel: Irradiance ---
+
 plt.rcParams['figure.figsize'] = [12, 14]
 
 plt.figure(figsize=(12, 10))
-plt.subplot(2, 1, 1)
+ax1 = plt.subplot(2, 1, 1)
 plt.plot(NOAA_time, NZDTdir_ir, label='Direct', color='red',linestyle='--')
 plt.plot(NOAA_time, NZDTdiff_ir, label='Diffuse', color='orange')
 plt.plot(NOAA_time, NZDTup_ir, label='Upwelling', color='black',linestyle='-.')
-plt.title(f'Solar Irradiance and Panel Power on Day {input_2} of $20{input_1}$')
-plt.ylabel('Irradiance W/m^$2$')
+
+# ax2 = ax1.twinx()
+# ax2.set_ylabel('Temperature (c)')
+# ax2.plot(NOAA_time, NOAAtemp, label='Temp', color='green',linestyle='-.')
+
+
+# plt.title(f'Solar Irradiance and Panel Power on Day {input_2} of $20{input_1}$', fontsize=30)
+plt.title(f'Day {input_2} of $20{input_1}$', fontsize=30)
+
+plt.ylabel('Irradiance W/m^$2$',fontsize=25)
 ax = plt.gca()
 start, end = ax.get_xlim() # Get the range of the x-axis (e.g., 0 to N)
 # Select 15 evenly spaced integers across the range
 ax.set_xticks(np.linspace(0, int(end), 12).astype(int))
 #rotate the x axis labels by 45 degrees
-plt.xticks(rotation=45)
+# plt.xticks(rotation=45)
 plt.ylim(0, 1100)
 plt.yticks(np.arange(0, 1100, 80))
 plt.legend(loc='best', markerscale=2)
 plt.grid(True)
-plt.xticks(rotation=45)
+plt.xticks(rotation=45, fontsize=10)
+plt.yticks(fontsize=10)
 
 # --- Bottom Left: Actual Power ---
 #set the figure size
 ax_left = plt.subplot(2, 1, 2)
 plt.scatter(time_101, power_101, label='Device 101', color='blue', **kwargs_101)
 plt.scatter(time_103, power_103, label='Device 103', color='green', **kwargs_103)
-plt.xlabel('Time of the Day')
-plt.ylabel('Power [W]')
-plt.text('02:00:00', 465, 'Observed', horizontalalignment='center', verticalalignment='top', fontsize=15, color='red')
+plt.xlabel('Time of the Day', fontsize = 25)
+plt.ylabel('Power [W]', fontsize=25)
+# plt.text('02:00:00', 465, 'Observed', horizontalalignment='center', verticalalignment='top', fontsize=15, color='red')
 ax = plt.gca()
 start, end = ax.get_xlim() # Get the range of the x-axis (e.g., 0 to N)
 # Select 15 evenly spaced integers across the range
@@ -304,8 +317,8 @@ plt.legend(loc='best', markerscale=2)
 plt.ylim(0, 480)
 plt.yticks(np.arange(0, 481, 40))
 plt.grid(True)
-plt.xticks(rotation=45)
-
+plt.xticks(rotation=45,fontsize=10)
+plt.yticks(fontsize=10)
 # --- Bottom Right: Simulated Power ---
 # ax_right = plt.subplot(2, 2, 4, sharey=ax_left)
 # # sim_results = simulated_power(solar_angle, NZDTdir_ir, NZDTdiff_ir, NZDTup_ir)
@@ -336,11 +349,17 @@ plt.xticks(rotation=45)
 
 
 
-plt.savefig(f"{OutputPath}/irradiance_power_only_{input_1}_{input_2}_plot.png", 
+# plt.savefig(f"{OutputPath}/irradiance_power_only_{input_1}_{input_2}_plot.png", 
+#             bbox_inches='tight', 
+#             dpi=100, 
+#             facecolor='white')
+
+plt.savefig(f"{OutputPath}/irradiance_power_and_device_{input_1}_{input_2}_plot.png", 
             bbox_inches='tight', 
             dpi=100, 
             facecolor='white')
-plt.show()
+
+# plt.show()
 
 
 '''
