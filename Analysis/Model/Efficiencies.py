@@ -212,33 +212,53 @@ sim_power103 = simulated_power(solar_angle103, NZDTdir_ir, NZDTdiff_ir, NZDTup_i
 
 TestTimeHour = str(input('Hour = '))
 TestTimeMin = str(input('Min = '))
-TestIndex = 60*int(TestTimeHour) + int(TestTimeMin)
+TestIndex1 = 60*int(TestTimeHour) + int(TestTimeMin)
+TestIndex2 = TestIndex1-10
+TestIndex3 = TestIndex1+10
 
+# How much the output is attenuated by the angle of the sun WRT the solar panel
+solar_angle =  [np.cos(np.radians(-23.44*np.cos(np.radians(360*((x/1440)+182+int(input_2))+10)/365)))
+             *np.cos(((((x / 1440) + 182+int(input_2))%1)*2*np.pi)) for x in range(1440)] 
+solar_angle = np.array(solar_angle) #convert to numpy array
+solar_angle101 = np.abs(np.concatenate((solar_angle[720:1440],solar_angle[0:720])))
 
 # for a given time, and the data around that time.. (for device 101)
 # 1. make vector of power outputs
-PowerOutputs = np.array([power_101[(TestIndex-30)*2],power_101[TestIndex*2],power_101[(TestIndex+30)*2]])
+PowerOutputs = np.array([power_101[(TestIndex2)*2],power_101[TestIndex1*2],power_101[(TestIndex3)*2]])
 # 2. Make irradiance matrix
-NOAA_irr = np.array([[NZDTdir_ir[TestIndex-30],NZDTdir_ir[TestIndex],NZDTdir_ir[TestIndex+30]],
-                    [NZDTdiff_ir[TestIndex-30],NZDTdiff_ir[TestIndex],NZDTdiff_ir[TestIndex+30]],
-                    [NZDTup_ir[TestIndex-30],NZDTup_ir[TestIndex],NZDTup_ir[TestIndex+30]]])
+
+NZDTdir_ir_angled1 = NZDTdir_ir[TestIndex1]*solar_angle101[TestIndex1]
+NZDTdir_ir_angled2 = NZDTdir_ir[TestIndex2]*solar_angle101[TestIndex2]
+NZDTdir_ir_angled3 = NZDTdir_ir[TestIndex3]*solar_angle101[TestIndex3]
+print()
+print(f'NZDTdir_ir[TestIndex1]: {NZDTdir_ir[TestIndex1]}')
+print(f'solar_angle[TestIndex1]: {solar_angle101[TestIndex1]}')
+print()
+print()
+print(f'NZDTdir_ir[TestIndex2]: {NZDTdir_ir[TestIndex2]}')
+print(f'solar_angle[TestIndex2]: {solar_angle101[TestIndex2]}')
+print()
+print(f'NZDTdir_ir[TestIndex3]: {NZDTdir_ir[TestIndex3]}')
+print(f'solar_angle[TestIndex3]: {solar_angle101[TestIndex3]}')
+print()
+NOAA_irr = [[NZDTdir_ir_angled2,NZDTdir_ir_angled1,NZDTdir_ir_angled3],
+[NZDTdiff_ir[TestIndex2],NZDTdiff_ir[TestIndex1],NZDTdiff_ir[TestIndex3]],
+[NZDTup_ir[TestIndex2],NZDTup_ir[TestIndex1],NZDTup_ir[TestIndex3]]]
 # 3. do linear algebra (dir,diff,up)
+print(f'solar_angle: {solar_angle}')
+print(f'NOAA_irr: {NOAA_irr}')
 
-# How much the output is attenuated by the angle of the sun WRT the solar panel
-# solar_angle =  [np.cos(np.radians(-23.44*np.cos(np.radians(360*((x/1440)+182+int(input_2))+10)/365)))
-#              *np.cos(((((x / 1440) + 182+int(input_2))%1)*2*np.pi)) for x in range(1440)] 
-# solar_angle = np.array(solar_angle) #convert to numpy array
-# solar_angle101 = np.concatenate((solar_angle[720:1440],solar_angle[0:720]))
+Efficiencies = (((1/Area) * (np.linalg.inv(NOAA_irr) @ PowerOutputs)))
+print()
+print(f'Effs: {Efficiencies}')
+print()
+# Printing
 
 
-Efficiencies = (((1/Area) * (np.linalg.inv(NOAA_irr) @ PowerOutputs))/solar_angle101[TestIndex])
-print(Efficiencies)
+# plt.figure()
+# plt.plot(np.linspace(0,1440,1440), solar_angle)
+# plt.show()
 
-plt.figure()
-plt.plot(np.linspace(0,1440,1440), solar_angle)
-plt.show()
-print(solar_angle)
-print(NOAA_irr)
 
 
 
