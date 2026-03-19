@@ -123,7 +123,7 @@ A simple model to simulate power based on solar angle and irradiance
 This need to be verified and improved, I have made some assumptions here about efficiency, and the formula is very basic'''
 def simulated_power(angle,dir, diff, up):
      
-     eff_dir = 0.15  # Assume 15% efficiency
+     eff_dir = 0.25  # Assume 15% efficiency
      eff_diff = 0.05  # Assume 5% efficiency for diffuse
      eff_upwelling = 0.08   # Assume 8% efficiency for upwelling
      eff_back = 0.70  # Assume 70% efficiency for back side
@@ -277,8 +277,13 @@ plt.plot(NOAA_time, NZDTdir_ir, label='Direct', color='red',linestyle='--')
 plt.plot(NOAA_time, NZDTdiff_ir, label='Diffuse', color='orange')
 plt.plot(NOAA_time, NZDTup_ir, label='Upwelling', color='black',linestyle='-.')
 
-# ax2 = ax1.twinx()
+# ax2 = ax1.twiny()
 # ax2.set_ylabel('Temperature (c)')
+print(f'type(NOAA_time): {type(NOAA_time)}')
+print(f'type(NOAA_time[30]): {type(NOAA_time[30])})')
+print(f'type(NOAAtemp): {type(NOAAtemp)}')
+print(f'type(NOAAtemp[30]): {type(NOAAtemp[30])}')
+print(f'NOAAtemp[30]: {NOAAtemp[300]}')
 # ax2.plot(NOAA_time, NOAAtemp, label='Temp', color='green',linestyle='-.')
 
 
@@ -301,7 +306,7 @@ plt.yticks(fontsize=10)
 
 # --- Bottom Left: Actual Power ---
 #set the figure size
-ax_left = plt.subplot(2, 1, 2)
+ax_left = plt.subplot(2, 2, 3)
 plt.scatter(time_101, power_101, label='Device 101', color='blue', **kwargs_101)
 plt.scatter(time_103, power_103, label='Device 103', color='green', **kwargs_103)
 plt.xlabel('Time of the Day', fontsize = 25)
@@ -320,30 +325,30 @@ plt.grid(True)
 plt.xticks(rotation=45,fontsize=10)
 plt.yticks(fontsize=10)
 # --- Bottom Right: Simulated Power ---
-# ax_right = plt.subplot(2, 2, 4, sharey=ax_left)
-# # sim_results = simulated_power(solar_angle, NZDTdir_ir, NZDTdiff_ir, NZDTup_ir)
-# plt.plot(NOAA_time, sim_power101, label='Simulated 101', color='blue', linestyle='--')
-# plt.plot(NOAA_time, sim_power103, label='Simulated 103', color='green')
-# plt.xlabel('Time of the Day')
-# ax = plt.gca()
-# start, end = ax.get_xlim() # Get the range of the x-axis (e.g., 0 to N)
-# # Select 15 evenly spaced integers across the range
-# ax.set_xticks(np.linspace(0, int(end), 12).astype(int))
+ax_right = plt.subplot(2, 2, 4, sharey=ax_left)
+# sim_results = simulated_power(solar_angle, NZDTdir_ir, NZDTdiff_ir, NZDTup_ir)
+plt.plot(NOAA_time, sim_power101, label='Simulated 101', color='blue', linestyle='--')
+plt.plot(NOAA_time, sim_power103, label='Simulated 103', color='green')
+plt.xlabel('Time of the Day')
+ax = plt.gca()
+start, end = ax.get_xlim() # Get the range of the x-axis (e.g., 0 to N)
+# Select 15 evenly spaced integers across the range
+ax.set_xticks(np.linspace(0, int(end), 12).astype(int))
 
-# #rotate the x axis labels by 45 degrees
-# plt.xticks(rotation=45)
-# plt.legend(loc='best')
-# plt.ylim(0, 550)
-# plt.grid(True)
-# plt.xticks(rotation=45)
-# plt.setp(ax_right.get_yticklabels(), visible=False)
-# plt.text('02:00:00', 465, 'Simulated', horizontalalignment='center', verticalalignment='top', fontsize=15, color='red')
-# # plt.text('23:30:00', 490, f'Avg 101: {np.nanmean(sim_power101):.2f} Avg 103: {np.nanmean(sim_power103):.2f}', horizontalalignment='right', 
-# #          verticalalignment='bottom', fontsize=10, color='black')
-# ax_right.set_ylabel('')
-# # Global layout adjustments
-# plt.tight_layout()
-# # plt.subplots_adjust(wspace=0)
+#rotate the x axis labels by 45 degrees
+plt.xticks(rotation=45)
+plt.legend(loc='best')
+plt.ylim(0, 550)
+plt.grid(True)
+plt.xticks(rotation=45)
+plt.setp(ax_right.get_yticklabels(), visible=False)
+plt.text('02:00:00', 465, 'Simulated', horizontalalignment='center', verticalalignment='top', fontsize=15, color='red')
+# plt.text('23:30:00', 490, f'Avg 101: {np.nanmean(sim_power101):.2f} Avg 103: {np.nanmean(sim_power103):.2f}', horizontalalignment='right', 
+#          verticalalignment='bottom', fontsize=10, color='black')
+ax_right.set_ylabel('')
+# Global layout adjustments
+plt.tight_layout()
+plt.subplots_adjust(wspace=0)
 
 
 
