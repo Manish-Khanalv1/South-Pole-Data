@@ -204,6 +204,16 @@ power_103 = voltage_103 * current_103
 # -----------------------------
 
 
+SimPower = simulated_power(solar_angle101, NZDTdir_ir, NZDTdir_ir, NZDTup_ir)
+SimPower = np.repeat(np.array(SimPower),2)
+SimPower = SimPower[:-1]
+print(len(np.arange(0,2879,1)))
+print(len(SimPower))
+print(len(power_101))
+plt.scatter(np.arange(0,2879,1),SimPower, s = 2)
+plt.scatter(np.arange(0,2879,1),power_101, s = 2)
+plt.show()
+
 
 
 # # Get simulated power variables
@@ -370,7 +380,8 @@ def simulated_power_eff(angle,dir, diff, up, effs):
         
      return power
 
-def Sim(time, eff_dir, eff_diff, eff_upwelling):
+def Sim(time, eff_dir, eff_upwelling):
+    eff_diff = .05
     effs = (eff_dir, eff_diff, eff_upwelling)
     sim_power101 = simulated_power_eff(solar_angle101, NZDTdir_ir, NZDTdiff_ir, NZDTup_ir, effs)
     sim_power101 = np.repeat(sim_power101,2)
@@ -413,7 +424,7 @@ time_101_30sPast00 = np.linspace(0,2879, 2880, dtype = int)
 # make time and power len 2880
 # time_101_30sPast00 = np.append(time_101_30sPast00, 2880)
 power_101 = np.append(power_101, 0)
-effs, covs = curve_fit(Sim, time_101_30sPast00, power_101, p0 = [.15,.05,.08])
+effs, covs = curve_fit(Sim, time_101_30sPast00, power_101, p0 = [.15,.08])
 print(effs)
 
 
@@ -426,13 +437,12 @@ print(effs)
 
 # print(f'Time len: {len(time_101_30sPast00)}')
 # # print(f'Power len: {len(simulated_power_model(time_101_30sPast00, .15, .05, .08))}')
-# # plt.scatter(time_101_30sPast00, simulated_power_model(time_101_30sPast00, .15, .05, .08), s = 2)
-# # plt.scatter(time_101_30sPast00, power_101, s = 2)
-# # plt.show()
-# # plt.scatter(time_101_30sPast00, simulated_power_model(time_101_30sPast00, .1, .1, .1), s = 2)
-# # plt.scatter(time_101_30sPast00, power_101, s = 2)
-# # plt.show()
+# plt.scatter(time_101_30sPast00, simulated_power_model(time_101_30sPast00, .15, .05, .08), s = 2)
+# plt.scatter(time_101_30sPast00, power_101, s = 2)
+# plt.show()
+# plt.scatter(time_101_30sPast00, simulated_power_model(time_101_30sPast00, .1, .1, .1), s = 2)
+# plt.scatter(time_101_30sPast00, power_101, s = 2)
+# plt.show()
 
 
 # print(time_101_30sPast00)
-
