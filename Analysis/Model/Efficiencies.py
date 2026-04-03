@@ -204,21 +204,36 @@ power_103 = voltage_103 * current_103
 # -----------------------------
 
 
-SimPower = simulated_power(solar_angle101, NZDTdir_ir, NZDTdir_ir, NZDTup_ir)
-SimPower = np.repeat(np.array(SimPower),2)
-SimPower = SimPower[:-1]
-print(len(np.arange(0,2879,1)))
-print(len(SimPower))
-print(len(power_101))
-plt.scatter(np.arange(0,2879,1),SimPower, s = 2)
-plt.scatter(np.arange(0,2879,1),power_101, s = 2)
-plt.show()
+
+
+
+# # By guess and check found the shift in the solar angle to match the data
+# k1 = 899-25
+# solar_angle101_rolled = np.roll(solar_angle101,-k1)
+# # circular shift solar_angle101
+# k3 =120
+# solar_angle103_rolled = np.roll(solar_angle103,-k3)
+
+
+
+# SimPower = simulated_power(solar_angle101_rolled, NZDTdir_ir, NZDTdir_ir, NZDTup_ir)
+
+# SimPower = np.repeat(np.array(SimPower),2)
+# SimPower = SimPower[:-1]
+# print(len(np.arange(0,2879,1)))
+# print(len(SimPower))
+# print(len(power_101))
+# plt.scatter(np.arange(0,2879,1),SimPower, s = 2)
+# plt.scatter(np.arange(0,2879,1),power_101, s = 2)
+# # plt.scatter(np.arange(0,2879,1),solar_angle101_rolled, s = 2)
+# print(len(solar_angle101_rolled))
+# plt.show()
 
 
 
 # # Get simulated power variables
-# sim_power101 = simulated_power(solar_angle101, NZDTdir_ir, NZDTdiff_ir, NZDTup_ir)
-# sim_power103 = simulated_power(solar_angle103, NZDTdir_ir, NZDTdiff_ir, NZDTup_ir)
+# sim_power101 = simulated_power(solar_angle101_rolled, NZDTdir_ir, NZDTdiff_ir, NZDTup_ir)
+# sim_power103 = simulated_power(solar_angle103_rolled, NZDTdir_ir, NZDTdiff_ir, NZDTup_ir)
 
 # # Solve for the efficiencies
 
@@ -234,24 +249,32 @@ plt.show()
 # solar_angle = np.array(solar_angle) #convert to numpy array
 # solar_angle101 = np.abs(np.concatenate((solar_angle[720:1440],solar_angle[0:720])))
 
+
+
+
+
+
+
+
+
 # # for a given time, and the data around that time.. (for device 101)
 # # 1. make vector of power outputs
-# PowerOutputs = np.array([power_101[(TestIndex2)*2],power_101[TestIndex1*2],power_101[(TestIndex3)*2]])
+# PowerOutputs = np.array([power_101_rolled[(TestIndex2)*2],power_101_rolled[TestIndex1*2],power_101_rolled[(TestIndex3)*2]])
 # # 2. Make irradiance matrix
 
-# NZDTdir_ir_angled1 = NZDTdir_ir[TestIndex1]*solar_angle101[TestIndex1]
-# NZDTdir_ir_angled2 = NZDTdir_ir[TestIndex2]*solar_angle101[TestIndex2]
-# NZDTdir_ir_angled3 = NZDTdir_ir[TestIndex3]*solar_angle101[TestIndex3]
+# NZDTdir_ir_angled1 = NZDTdir_ir[TestIndex1]*solar_angle101_rolled[TestIndex1]
+# NZDTdir_ir_angled2 = NZDTdir_ir[TestIndex2]*solar_angle101_rolled[TestIndex2]
+# NZDTdir_ir_angled3 = NZDTdir_ir[TestIndex3]*solar_angle101_rolled[TestIndex3]
 # print()
 # print(f'NZDTdir_ir[TestIndex1]: {NZDTdir_ir[TestIndex1]}')
-# print(f'solar_angle[TestIndex1]: {solar_angle101[TestIndex1]}')
+# print(f'solar_angle_rolled[TestIndex1]: {solar_angle101_rolled[TestIndex1]}')
 # print()
 # print()
 # print(f'NZDTdir_ir[TestIndex2]: {NZDTdir_ir[TestIndex2]}')
-# print(f'solar_angle[TestIndex2]: {solar_angle101[TestIndex2]}')
+# print(f'solar_angle_rolled[TestIndex2]: {solar_angle101_rolled[TestIndex2]}')
 # print()
 # print(f'NZDTdir_ir[TestIndex3]: {NZDTdir_ir[TestIndex3]}')
-# print(f'solar_angle[TestIndex3]: {solar_angle101[TestIndex3]}')
+# print(f'solar_angle_rolled[TestIndex3]: {solar_angle101_rolled[TestIndex3]}')
 # print()
 # NOAA_irr = [[NZDTdir_ir_angled2,NZDTdir_ir_angled1,NZDTdir_ir_angled3],
 # [NZDTdiff_ir[TestIndex2],NZDTdiff_ir[TestIndex1],NZDTdiff_ir[TestIndex3]],
@@ -267,9 +290,9 @@ plt.show()
 # # Printing
 
 
-# plt.figure()
-# plt.plot(np.linspace(0,1440,1440), solar_angle)
-# plt.show()
+# # plt.figure()
+# # plt.plot(np.linspace(0,1440,1440), solar_angle)
+# # plt.show()
 
 
 
@@ -385,64 +408,106 @@ def Sim(time, eff_dir, eff_upwelling):
     effs = (eff_dir, eff_diff, eff_upwelling)
     sim_power101 = simulated_power_eff(solar_angle101, NZDTdir_ir, NZDTdiff_ir, NZDTup_ir, effs)
     sim_power101 = np.repeat(sim_power101,2)
-    time_range = np.linspace(0,2880, 2880)
-    fit = interp1d(time_range, sim_power101, kind = 'quadratic')
-    return fit(time)
-
-# effs = (.25, .05, .08)
-# sim_power101 = simulated_power_eff(solar_angle101, NZDTdir_ir, NZDTdiff_ir, NZDTup_ir, effs)
-# sim_power101 = np.repeat(sim_power101,2)
-# time_range = np.linspace(0,2880, 2880)
-# # print(len(time_range))
-# # print(len(sim_power101))
-# fit_linear = interp1d(time_range, sim_power101)
-# plt.plot(time_range, fit_linear(time_range))
-# plt.show()
+    # sim_power101 = np.where(sim_power101 = )
+    time_range = np.arange(0,2880, 1)
+    fit_power = interp1d(time_range, sim_power101, kind = 'nearest')
+    # return sim_power101[:-1]
+    return fit_power(time)
 
 
+# Try using lmfit
+from lmfit import Model
+mod = Model(Sim)
 
-# def SimPower(time_index, eff_dir, eff_diff, eff_upwelling):
-#     solar_angle =  [np.cos(np.radians(-23.44*np.cos(np.radians(360*((time_index/2880+182+int(input_2))+10)/365)))
-#              *np.cos(((((time_index / len(time_index)) + 182+int(input_2))%1)*2*np.pi))
-#     dir = NZDTdir_ir
-#     diff = NZDTdiff_ir
-#     up = NZDTup_ir
+params = mod.make_params([.15,.08])
+
+params['eff_dir'].set(min=0, max=1)           # amp must be positive
+params['eff_upwelling'].set(min=0, max=1) # set a specific range
+
+
+x = np.arange(0,2879,1)
+y = power_101
+result = mod.fit(y, params, time=x, method='nelder', nan_policy = 'omit')
+
+# Print a comprehensive report of the results
+print(result.fit_report())
+
+# Access the best-fit values
+print(f"Best Amplitude: {result.params['eff_dir'].value}")
+
+
+
+
+
+
+
+SimPower = Sim(np.arange(0,2880,1), .175, .059)
+plt.plot(SimPower)
+# plt.xlim(1540,1560)
+# plt.ylim(420,430)
+plt.show()
+
+
+
+
+
+# # effs = (.25, .05, .08)
+# # sim_power101 = simulated_power_eff(solar_angle101, NZDTdir_ir, NZDTdiff_ir, NZDTup_ir, effs)
+# # sim_power101 = np.repeat(sim_power101,2)
+# # time_range = np.linspace(0,2880, 2880)
+# # # print(len(time_range))
+# # # print(len(sim_power101))
+# # fit_linear = interp1d(time_range, sim_power101)
+# # plt.plot(time_range, fit_linear(time_range))
+# # plt.show()
+
+
+
+# # def SimPower(time_index, eff_dir, eff_diff, eff_upwelling):
+# #     solar_angle =  [np.cos(np.radians(-23.44*np.cos(np.radians(360*((time_index/2880+182+int(input_2))+10)/365)))
+# #              *np.cos(((((time_index / len(time_index)) + 182+int(input_2))%1)*2*np.pi))
+# #     dir = NZDTdir_ir
+# #     diff = NZDTdiff_ir
+# #     up = NZDTup_ir
 
     
 
-time_101 = np.array(time_101)
-power_101 = np.array(power_101)
+# time_101 = np.array(time_101)
+# power_101 = np.array(power_101)
 
-# time_101 needs to be in the form of number of 30s intervals past midnight: code taken from chatGPT to do this
-def intervals_30s(time_str):
-    h, m, s = map(int, time_str.split(':'))
-    seconds = h*3600 + m*60 + s
-    return seconds // 30   # integer number of 30s intervals
+# # time_101 needs to be in the form of number of 30s intervals past midnight: code taken from chatGPT to do this
+# def intervals_30s(time_str):
+#     h, m, s = map(int, time_str.split(':'))
+#     seconds = h*3600 + m*60 + s
+#     return seconds // 30   # integer number of 30s intervals
 
-# time_101_30sPast00 = [intervals_30s(t) for t in time_101]
-time_101_30sPast00 = np.linspace(0,2879, 2880, dtype = int)
-# make time and power len 2880
-# time_101_30sPast00 = np.append(time_101_30sPast00, 2880)
-power_101 = np.append(power_101, 0)
-effs, covs = curve_fit(Sim, time_101_30sPast00, power_101, p0 = [.15,.08])
-print(effs)
+# # time_101_30sPast00 = [intervals_30s(t) for t in time_101]
+# time_101_30sPast00 = np.linspace(0,2878, 2879, dtype = int)
+# # make time and power len 2880
+# # time_101_30sPast00 = np.append(time_101_30sPast00, 2880)
+# # power_101 = np.append(power_101, 0)
+# print(f'This: {len(time_101_30sPast00)}')
+# # curve fit:
+# # effs, covs = curve_fit(Sim, time_101_30sPast00, power_101, p0 = [.15,.08], nan_policy = 'omit')
 
-
-# print(len(simulated_power_model(time_101_30sPast00, .1,.1,.1)))
-# print(len(time_101_30sPast00))
-# print(time_101_30sPast00)
-# print(len(power_101))
-# print(power_101)
-# print(len(time_101))
-
-# print(f'Time len: {len(time_101_30sPast00)}')
-# # print(f'Power len: {len(simulated_power_model(time_101_30sPast00, .15, .05, .08))}')
-# plt.scatter(time_101_30sPast00, simulated_power_model(time_101_30sPast00, .15, .05, .08), s = 2)
-# plt.scatter(time_101_30sPast00, power_101, s = 2)
-# plt.show()
-# plt.scatter(time_101_30sPast00, simulated_power_model(time_101_30sPast00, .1, .1, .1), s = 2)
-# plt.scatter(time_101_30sPast00, power_101, s = 2)
-# plt.show()
+# print(effs)
 
 
-# print(time_101_30sPast00)
+# # print(len(simulated_power_model(time_101_30sPast00, .1,.1,.1)))
+# # print(len(time_101_30sPast00))
+# # print(time_101_30sPast00)
+# # print(len(power_101))
+# # print(power_101)
+# # print(len(time_101))
+
+# # print(f'Time len: {len(time_101_30sPast00)}')
+# # # print(f'Power len: {len(simulated_power_model(time_101_30sPast00, .15, .05, .08))}')
+# # plt.scatter(time_101_30sPast00, simulated_power_model(time_101_30sPast00, .15, .05, .08), s = 2)
+# # plt.scatter(time_101_30sPast00, power_101, s = 2)
+# # plt.show()
+# # plt.scatter(time_101_30sPast00, simulated_power_model(time_101_30sPast00, .1, .1, .1), s = 2)
+# # plt.scatter(time_101_30sPast00, power_101, s = 2)
+# # plt.show()
+
+
+# # print(time_101_30sPast00)
