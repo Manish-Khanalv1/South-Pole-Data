@@ -387,26 +387,38 @@ def simulated_power_eff(angle,dir, diff, up, effs):
      eff_ir_away = (diff*eff_diff + up*eff_upwelling)*area
      
      power = []
-     
+
+     FrontClip = np.max(power_101)
+     BackClip = FrontClip
+
+    
      #  zip() to loop through the pre-calculated arrays step-by-step
      for a, ir_towards, ir_away in zip(angle, eff_ir_towards, eff_ir_away):
         if a < 0:
             # Sun hits BACK side.
             # Back gets the ir_towards and scaled by eff_back
-            p_instant = np.clip((ir_towards * eff_back),0,262) + np.clip((ir_away),0,145)
+            p_instant = np.clip((ir_towards * eff_back),0,BackClip) + np.clip((ir_away),0,145)
         else:
             # Sun hits FRONT side.
             # Front gets ir_towards
-            p_instant = np.clip((ir_towards),0,375) + np.clip((ir_away * eff_back),0,112)
+            p_instant = np.clip((ir_towards),0,FrontClip) + np.clip((ir_away * eff_back),0,112)
             
         power.append(p_instant)
         
      return power
 
-def Sim(time, eff_dir, eff_upwelling):
-    eff_diff = .05
+
+
+
+def Sim(time, eff_dir,eff_diff, eff_upwelling):
+    # eff_diff = .05
     effs = (eff_dir, eff_diff, eff_upwelling)
-    sim_power101 = simulated_power_eff(solar_angle101, NZDTdir_ir, NZDTdiff_ir, NZDTup_ir, effs)
+
+    # circular shift solar_angle101
+    k = 70
+    solar_angle101_rolled = np.roll(solar_angle101,-k)
+
+    sim_power101 = simulated_power_eff(solar_angle101_rolled, NZDTdir_ir, NZDTdiff_ir, NZDTup_ir, effs)
     sim_power101 = np.repeat(sim_power101,2)
     # sim_power101 = np.where(sim_power101 = )
     time_range = np.arange(0,2880, 1)
@@ -419,10 +431,11 @@ def Sim(time, eff_dir, eff_upwelling):
 from lmfit import Model
 mod = Model(Sim)
 
-params = mod.make_params([.15,.08])
+params = mod.make_params([.15,.05,.08])
 
-params['eff_dir'].set(min=0, max=1)           # amp must be positive
-params['eff_upwelling'].set(min=0, max=1) # set a specific range
+params['eff_dir'].set(min=0, max=1)     
+params['eff_diff'].set(min=0,max=1)
+params['eff_upwelling'].set(min=0, max=1) 
 
 
 x = np.arange(0,2879,1)
@@ -433,19 +446,36 @@ result = mod.fit(y, params, time=x, method='nelder', nan_policy = 'omit')
 print(result.fit_report())
 
 # Access the best-fit values
-print(f"Best Amplitude: {result.params['eff_dir'].value}")
+# print(f"Best Amplitude: {result.params['eff_dir'].value}")
+
+
+fitted_dir_eff = result.params['eff_dir'].value
+fitted_diff_eff = result.params['eff_diff'].value
+fitted_upwelling_eff = result.params['eff_upwelling'].value
 
 
 
 
 
-
-
-SimPower = Sim(np.arange(0,2880,1), .175, .059)
-plt.plot(SimPower)
-# plt.xlim(1540,1560)
-# plt.ylim(420,430)
+SimPower = Sim(np.arange(0,2880,1), fitted_dir_eff,fitted_diff_eff, fitted_upwelling_eff)
+plt.plot(SimPower, label = 'Model')
+plt.plot(power_101, label = 'Data')
+plt.xlabel('30s Past midnight')
+plt.ylabel('Power [Watts]')
+plt.title(f'Fit for device 101 on day {input_2}')
+plt.legend()
+plt.text(1000, 250, f'Direct: {np.round(fitted_dir_eff, 2)}')
+plt.text(1000, 225, f'Diffuse: {np.round(fitted_diff_eff, 2)}')
+plt.text(1000, 200, f'Upwelling: {np.round(fitted_upwelling_eff, 2)}')
 plt.show()
+
+
+
+
+
+
+
+
 
 
 
