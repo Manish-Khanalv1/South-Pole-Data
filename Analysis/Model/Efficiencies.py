@@ -381,8 +381,8 @@ def simulated_power_eff(angle,dir, diff, up, effs):
     # eff_diff = efficiencies['diff']
     # eff_upwelling = efficiencies['upwelling']
     
-
-    
+     
+     
      eff_ir_towards = (abs(angle)*eff_dir*dir + diff*eff_diff + up*eff_upwelling)*area
      eff_ir_away = (diff*eff_diff + up*eff_upwelling)*area
      
@@ -404,9 +404,14 @@ def simulated_power_eff(angle,dir, diff, up, effs):
             p_instant = np.clip((ir_towards),0,FrontClip) + np.clip((ir_away * eff_back),0,112)
             
         power.append(p_instant)
-        
-     return power
 
+     # compute for each induvidual power without efficiency
+     PowerDir = abs(angle)*dir*area
+     PowerDiff = diff*area*2
+     PowerUpwelling = up*area*2
+     # for a, PowerSepTowards, PowerSepAway in zip(angle, )
+        
+     return power, (PowerDir,PowerDiff,PowerUpwelling)
 
 
 
@@ -418,7 +423,7 @@ def Sim(time, eff_dir,eff_diff, eff_upwelling):
     k = 70
     solar_angle101_rolled = np.roll(solar_angle101,-k)
 
-    sim_power101 = simulated_power_eff(solar_angle101_rolled, NZDTdir_ir, NZDTdiff_ir, NZDTup_ir, effs)
+    sim_power101, PowerTuple = simulated_power_eff(solar_angle101_rolled, NZDTdir_ir, NZDTdiff_ir, NZDTup_ir, effs)
     sim_power101 = np.repeat(sim_power101,2)
     # sim_power101 = np.where(sim_power101 = )
     time_range = np.arange(0,2880, 1)
@@ -433,9 +438,9 @@ mod = Model(Sim)
 
 params = mod.make_params([.15,.05,.08])
 
-params['eff_dir'].set(min=0, max=1)     
-params['eff_diff'].set(min=0,max=1)
-params['eff_upwelling'].set(min=0, max=1) 
+params['eff_dir'].set(min=0, max=.25)     
+params['eff_diff'].set(min=0,max=.25)
+params['eff_upwelling'].set(min=0, max=.25) 
 
 
 x = np.arange(0,2879,1)
@@ -457,10 +462,33 @@ fitted_upwelling_eff = result.params['eff_upwelling'].value
 
 
 
-SimPower = Sim(np.arange(0,2880,1), fitted_dir_eff,fitted_diff_eff, fitted_upwelling_eff)
-plt.plot(SimPower, label = 'Model')
-plt.plot(power_101, label = 'Data')
-plt.xlabel('30s Past midnight')
+SimPower = Sim(np.arange(0,2879,1), fitted_dir_eff,fitted_diff_eff, fitted_upwelling_eff)
+
+
+PowersOnPlots = 1 # Put the 3 different components of power on the plot
+
+if PowersOnPlots:
+    # Get the power tuple
+    effs = [fitted_dir_eff, fitted_diff_eff, fitted_upwelling_eff]
+    # circular shift solar_angle101
+    k = 70
+    solar_angle101_rolled = np.roll(solar_angle101,-k)
+    _______, PowerTuple = simulated_power_eff(solar_angle101_rolled, NZDTdir_ir, NZDTdiff_ir, NZDTup_ir, effs)
+    
+    # Make the right size for plotting
+    DirPower = np.repeat(PowerTuple[0],2)[:-1]
+    DiffPower = np.repeat(PowerTuple[1],2)[:-1]
+    UpwellingPower = np.repeat(PowerTuple[2],2)[:-1]
+
+
+# print(len(SimPower))
+# print(len(power_101))
+print(time_101)
+plt.plot(time_101, SimPower, label = 'Model')
+plt.plot(time_101, power_101, label = 'Data')
+tick_positions = range(0,len(time_101), 200)
+plt.xticks(ticks=tick_positions, labels=[time_101[i] for i in tick_positions], rotation = 45, ha='right', fontsize = 5)
+plt.xlabel('Time of Day')
 plt.ylabel('Power [Watts]')
 plt.title(f'Fit for device 101 on day {input_2}')
 plt.legend()
@@ -469,6 +497,18 @@ plt.text(1000, 225, f'Diffuse: {np.round(fitted_diff_eff, 2)}')
 plt.text(1000, 200, f'Upwelling: {np.round(fitted_upwelling_eff, 2)}')
 plt.show()
 
+
+if PowersOnPlots:
+    plt.plot(time_101, DirPower, label = 'Direct Power', color = 'black', ls = '-')
+    plt.plot(time_101, DiffPower, label = 'Diffuse Power', color = 'black', ls = '--')
+    plt.plot(time_101, UpwellingPower, label = 'Upwelling Power', color = 'black', ls = ':')
+    tick_positions = range(0,len(time_101), 200)
+    plt.xticks(ticks=tick_positions, labels=[time_101[i] for i in tick_positions], rotation = 45, ha='right', fontsize = 5)
+    plt.xlabel('Time of Day')
+    plt.ylabel('Power [Watts]')
+    plt.title(f'Power Components for day {input_2}')
+    plt.legend()
+    plt.show()
 
 
 
