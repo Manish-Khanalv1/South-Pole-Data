@@ -367,20 +367,21 @@ power_103 = voltage_103 * current_103
 
 
     
-# method 2: scipy.optimize curvefit
+# method 2: lmfit
 
-def simulated_power_eff(angle,dir, diff, up, effs):
+def simulated_power_eff(angle, dir, diff, up, effs):
      # effs has shape (eff_dir,eff_dif,eff_upwelling)
-     eff_dir = effs[0]  # Assume 15% efficiency
-     eff_diff = effs[1]  # Assume 5% efficiency for diffuse
-     eff_upwelling = effs[2]   # Assume 8% efficiency for upwelling
+     eff_dir = effs[0]  
+     eff_diff = effs[1]  
+     eff_upwelling = effs[2]   
      eff_back = 0.70  # Assume 70% efficiency for back side
      area = 2.0  # Assume 2 square meter panel
 
     # eff_dir = efficiencies['dir']
     # eff_diff = efficiencies['diff']
     # eff_upwelling = efficiencies['upwelling']
-    
+     up = np.array(up)
+     up = np.linspace(np.mean(up),np.mean(up), len(up))
      
      
      eff_ir_towards = (abs(angle)*eff_dir*dir + diff*eff_diff + up*eff_upwelling)*area
@@ -397,11 +398,11 @@ def simulated_power_eff(angle,dir, diff, up, effs):
         if a < 0:
             # Sun hits BACK side.
             # Back gets the ir_towards and scaled by eff_back
-            p_instant = np.clip((ir_towards * eff_back),0,BackClip) + np.clip((ir_away),0,145)
+            p_instant = np.clip((ir_towards * eff_back),0,BackClip) + (ir_away)
         else:
             # Sun hits FRONT side.
             # Front gets ir_towards
-            p_instant = np.clip((ir_towards),0,FrontClip) + np.clip((ir_away * eff_back),0,112)
+            p_instant = np.clip((ir_towards),0,FrontClip) + ((ir_away * eff_back))
             
         power.append(p_instant)
 
@@ -410,7 +411,7 @@ def simulated_power_eff(angle,dir, diff, up, effs):
      PowerDiff = diff*area*2
      PowerUpwelling = up*area*2
      # for a, PowerSepTowards, PowerSepAway in zip(angle, )
-        
+     # power = np.clip(power,0,FrontClip)
      return power, (PowerDir,PowerDiff,PowerUpwelling)
 
 
@@ -437,15 +438,16 @@ from lmfit import Model
 mod = Model(Sim)
 
 params = mod.make_params([.15,.05,.08])
+print(mod.param_names,mod.independent_vars)
 
-params['eff_dir'].set(min=0, max=.25)     
-params['eff_diff'].set(min=0,max=.25)
-params['eff_upwelling'].set(min=0, max=.25) 
+params['eff_dir'].set(min=0, max=1)     
+params['eff_diff'].set(min=0,max=1)
+params['eff_upwelling'].set(min=0, max=1) 
 
-
-x = np.arange(0,2879,1)
+DayArrayPowerLength = len(power_101)
+x = np.arange(0,DayArrayPowerLength,1)
 y = power_101
-result = mod.fit(y, params, time=x, method='nelder', nan_policy = 'omit')
+result = mod.fit(y, params, time=x, method='leastsq', nan_policy = 'omit')
 
 # Print a comprehensive report of the results
 print(result.fit_report())
@@ -460,12 +462,13 @@ fitted_upwelling_eff = result.params['eff_upwelling'].value
 
 
 
+# Calculate the simulated power
+# SimPower = Sim(np.arange(0,2879,1), fitted_dir_eff,fitted_diff_eff, fitted_upwelling_eff)
+SimPower = Sim(np.arange(0,len(power_101),1), fitted_dir_eff,fitted_diff_eff, fitted_upwelling_eff)
 
 
-SimPower = Sim(np.arange(0,2879,1), fitted_dir_eff,fitted_diff_eff, fitted_upwelling_eff)
 
-
-PowersOnPlots = 1 # Put the 3 different components of power on the plot
+PowersOnPlots = False # Put the 3 different components of power on the plot
 
 if PowersOnPlots:
     # Get the power tuple
@@ -483,14 +486,16 @@ if PowersOnPlots:
 
 # print(len(SimPower))
 # print(len(power_101))
-print(time_101)
+print(f'len(time_101): {len(time_101)}')
+print(f'len(SimPower): {len(SimPower)}')
+print(f'len(power_101): {len(power_101)}')
 plt.plot(time_101, SimPower, label = 'Model')
 plt.plot(time_101, power_101, label = 'Data')
 tick_positions = range(0,len(time_101), 200)
-plt.xticks(ticks=tick_positions, labels=[time_101[i] for i in tick_positions], rotation = 45, ha='right', fontsize = 5)
-plt.xlabel('Time of Day')
-plt.ylabel('Power [Watts]')
-plt.title(f'Fit for device 101 on day {input_2}')
+plt.xticks(ticks=tick_positions, labels=[time_101[i] for i in tick_positions], rotation = 45, ha='right', fontsize = 10)
+plt.xlabel('Time of Day', fontsize = 20)
+plt.ylabel('Power [Watts]', fontsize = 20)
+plt.title(f'Fit for device 101 on day {input_2}', fontsize = 25)
 plt.legend()
 plt.text(1000, 250, f'Direct: {np.round(fitted_dir_eff, 2)}')
 plt.text(1000, 225, f'Diffuse: {np.round(fitted_diff_eff, 2)}')
@@ -504,11 +509,27 @@ if PowersOnPlots:
     plt.plot(time_101, UpwellingPower, label = 'Upwelling Power', color = 'black', ls = ':')
     tick_positions = range(0,len(time_101), 200)
     plt.xticks(ticks=tick_positions, labels=[time_101[i] for i in tick_positions], rotation = 45, ha='right', fontsize = 5)
-    plt.xlabel('Time of Day')
-    plt.ylabel('Power [Watts]')
+    plt.xlabel('Time of Day', fontsize = 5)
+    plt.ylabel('Power [Watts]', fontsize = 5)
     plt.title(f'Power Components for day {input_2}')
     plt.legend()
     plt.show()
+
+
+# Now find the integrated power [Energy]!
+# compute the difference
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
