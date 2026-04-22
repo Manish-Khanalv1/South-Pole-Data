@@ -10,6 +10,8 @@ import urllib.request
 import random
 from scipy.optimize import curve_fit
 from scipy.interpolate import interp1d
+from numpy import trapezoid
+from scipy.signal import argrelmin
 
 # where you want the data to be taken from and where you want to plots to go
 InputPath = '../../DataFolder'
@@ -427,12 +429,13 @@ def Sim(time, eff_dir,eff_diff, eff_upwelling):
     sim_power101, PowerTuple = simulated_power_eff(solar_angle101_rolled, NZDTdir_ir, NZDTdiff_ir, NZDTup_ir, effs)
     sim_power101 = np.repeat(sim_power101,2)
     # sim_power101 = np.where(sim_power101 = )
-    time_range = np.arange(0,2880, 1)
+    time_range = np.arange(0,2880, 1) # only used for the interpolation in next line
     fit_power = interp1d(time_range, sim_power101, kind = 'nearest')
     # return sim_power101[:-1]
     return fit_power(time)
 
-
+print()
+print()
 # Try using lmfit
 from lmfit import Model
 mod = Model(Sim)
@@ -447,6 +450,7 @@ params['eff_upwelling'].set(min=0, max=1)
 DayArrayPowerLength = len(power_101)
 x = np.arange(0,DayArrayPowerLength,1)
 y = power_101
+
 result = mod.fit(y, params, time=x, method='leastsq', nan_policy = 'omit')
 
 # Print a comprehensive report of the results
@@ -462,9 +466,70 @@ fitted_upwelling_eff = result.params['eff_upwelling'].value
 
 
 
-# Calculate the simulated power
-# SimPower = Sim(np.arange(0,2879,1), fitted_dir_eff,fitted_diff_eff, fitted_upwelling_eff)
+
+# we can do a sperate fit for the edges and comnine them.
+
+mod_edges1 = Model(Sim)
+
+params_edges1 = mod_edges1.make_params([.15,.05,.08])
+# print(mod.param_names,mod.independent_vars)
+
+params_edges1['eff_dir'].set(min=0, max=.01)     
+params_edges1['eff_diff'].set(min=0,max=1)
+params_edges1['eff_upwelling'].set(min=0, max=1) 
+
+
+# define the range of the minima
+power_101_numpy = power_101.to_numpy()
+indices = argrelmin(power_101_numpy)
+print(f'INDICES OF MIN: {indices}')
+
+MinLoc1 = 579   #Minimum location
+MinLoc2 = MinLoc1 +1440+50
+R = 100            # Radius         range will be [MinLoc1-R:MinLoc1+R]
+
+# do separat fit:
+x_edges1 = np.arange(0,DayArrayPowerLength,1)[MinLoc1-R:MinLoc1+R]
+y_edges1 = power_101[MinLoc1-R:MinLoc1+R]
+
+result_edges1 = mod_edges1.fit(y_edges1, params, time=x_edges1, method='leastsq', nan_policy = 'omit')
+
+
+fitted_dir_eff_edges1 = result_edges1.params['eff_dir'].value
+fitted_diff_eff_edges1 = result_edges1.params['eff_diff'].value
+fitted_upwelling_eff_edges1 = result_edges1.params['eff_upwelling'].value
+
+# For second edge aswell
+mod_edges2 = Model(Sim)
+
+params_edges2 = mod_edges2.make_params([.15,.05,.08])
+# print(mod.param_names,mod.independent_vars)
+
+params_edges2['eff_dir'].set(min=0, max=.01)     
+params_edges2['eff_diff'].set(min=0,max=1)
+params_edges2['eff_upwelling'].set(min=0, max=1) 
+
+x_edges2 = np.arange(0,DayArrayPowerLength,1)[MinLoc2-R:MinLoc2+R]
+y_edges2 = power_101[MinLoc2-R:MinLoc2+R]
+
+result_edges2 = mod_edges2.fit(y_edges2, params, time=x_edges2, method='leastsq', nan_policy = 'omit')
+
+fitted_dir_eff_edges2 = result_edges2.params['eff_dir'].value
+fitted_diff_eff_edges2 = result_edges2.params['eff_diff'].value
+fitted_upwelling_eff_edges2 = result_edges2.params['eff_upwelling'].value
+
+
+
+# Calculate the simulated power for both edges and regular
+
 SimPower = Sim(np.arange(0,len(power_101),1), fitted_dir_eff,fitted_diff_eff, fitted_upwelling_eff)
+SimPower_edges1 = Sim(np.arange(0,len(power_101),1)[MinLoc1-R:MinLoc1+R], fitted_dir_eff_edges1,fitted_diff_eff_edges1, fitted_upwelling_eff_edges1)
+SimPower_edges2 = Sim(np.arange(0,len(power_101),1)[MinLoc2-R:MinLoc2+R], fitted_dir_eff_edges2,fitted_diff_eff_edges2, fitted_upwelling_eff_edges2)
+
+# Combine edges and regular:
+SimPower[MinLoc1-R:MinLoc1+R] = SimPower_edges1
+SimPower[MinLoc2-R:MinLoc2+R] = SimPower_edges2
+
 
 
 
@@ -486,9 +551,10 @@ if PowersOnPlots:
 
 # print(len(SimPower))
 # print(len(power_101))
-print(f'len(time_101): {len(time_101)}')
-print(f'len(SimPower): {len(SimPower)}')
-print(f'len(power_101): {len(power_101)}')
+# print(f'len(time_101): {len(time_101)}')
+# print(f'len(SimPower): {len(SimPower)}')
+# print(f'len(power_101): {len(power_101)}')
+
 plt.plot(time_101, SimPower, label = 'Model')
 plt.plot(time_101, power_101, label = 'Data')
 tick_positions = range(0,len(time_101), 200)
@@ -500,6 +566,14 @@ plt.legend()
 plt.text(1000, 250, f'Direct: {np.round(fitted_dir_eff, 2)}')
 plt.text(1000, 225, f'Diffuse: {np.round(fitted_diff_eff, 2)}')
 plt.text(1000, 200, f'Upwelling: {np.round(fitted_upwelling_eff, 2)}')
+
+plt.text(1000, 175, f'Direct Edge 1: {np.round(fitted_dir_eff_edges1, 2)}')
+plt.text(1000, 150, f'Diffuse Edge 1: {np.round(fitted_diff_eff_edges1, 2)}')
+plt.text(1000, 125, f'Upwelling Edge 1: {np.round(fitted_upwelling_eff_edges1, 2)}')
+
+plt.text(1000, 100, f'Direct Edge 2: {np.round(fitted_dir_eff_edges2, 2)}')
+plt.text(1000, 75, f'Diffuse Edge 2: {np.round(fitted_diff_eff_edges2, 2)}')
+plt.text(1000, 50, f'Upwelling Edge 2: {np.round(fitted_upwelling_eff_edges2, 2)}')
 plt.show()
 
 
@@ -515,18 +589,32 @@ if PowersOnPlots:
     plt.legend()
     plt.show()
 
-
 # Now find the integrated power [Energy]!
-# compute the difference
+# Compute the difference aswell
+
+
+# simplify the problem: only compute for days of full length 2879
+
+
+# Remove nans
+power_101_nanless = power_101[~np.isnan(power_101)]
+SimPower_nanless = SimPower[~np.isnan(SimPower)]
+
+print()
+print()
+
+IntegratedPower_101_REALDATA=trapezoid(power_101_nanless,dx=30) # Find integrated power. dx is the period of data taking
+IntegratedPower_101_kwh_REALDATA = IntegratedPower_101_REALDATA/(1000*60**2) # this is the energy in kWh
+print(f'ENERGY REAL DATA: {np.round(IntegratedPower_101_kwh_REALDATA, 3)} [kWh]        Day {input_2} of {input_1}')
+
+IntegratedPower_101_SIM=trapezoid(SimPower_nanless,dx=30) # Find integrated power. dx is the period of data taking
+IntegratedPower_101_kwh_SIM = IntegratedPower_101_SIM/(1000*60**2) # this is the energy in kWh
+print(f'ENERGY SIM      : {np.round(IntegratedPower_101_kwh_SIM, 3)} [kWh]        Day {input_2} of {input_1}')
 
 
 
 
-
-
-
-
-
+# print(np.argmin(power_101))
 
 
 
