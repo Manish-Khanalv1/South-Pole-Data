@@ -391,20 +391,21 @@ def simulated_power_eff(angle, dir, diff, up, effs):
      
      power = []
 
-     FrontClip = np.max(power_101)
-     BackClip = FrontClip
-
+     # FrontClip = np.max(power_101)
+     # BackClip = FrontClip
+     FrontClip = 375
+     BackClip = 262
     
      #  zip() to loop through the pre-calculated arrays step-by-step
      for a, ir_towards, ir_away in zip(angle, eff_ir_towards, eff_ir_away):
         if a < 0:
             # Sun hits BACK side.
             # Back gets the ir_towards and scaled by eff_back
-            p_instant = np.clip((ir_towards * eff_back),0,BackClip) + (ir_away)
+            p_instant = np.clip((ir_towards * eff_back),0,BackClip) + np.clip(ir_away,0,145)
         else:
             # Sun hits FRONT side.
             # Front gets ir_towards
-            p_instant = np.clip((ir_towards),0,FrontClip) + ((ir_away * eff_back))
+            p_instant = np.clip((ir_towards),0,FrontClip) + np.clip((ir_away * eff_back),0,112)
             
         power.append(p_instant)
 
@@ -440,12 +441,12 @@ print()
 from lmfit import Model
 mod = Model(Sim)
 
-params = mod.make_params([.15,.05,.08])
+params = mod.make_params([.15,.05,.08]) # using the diff and upwelling from edges
 print(mod.param_names,mod.independent_vars)
 
 params['eff_dir'].set(min=0, max=1)     
-params['eff_diff'].set(min=0,max=1)
-params['eff_upwelling'].set(min=0, max=1) 
+params['eff_diff'].set(value=0, vary=False)
+params['eff_upwelling'].set(value=0.04, vary=False)
 
 DayArrayPowerLength = len(power_101)
 x = np.arange(0,DayArrayPowerLength,1)
@@ -562,6 +563,7 @@ plt.xticks(ticks=tick_positions, labels=[time_101[i] for i in tick_positions], r
 plt.xlabel('Time of Day', fontsize = 20)
 plt.ylabel('Power [Watts]', fontsize = 20)
 plt.title(f'Fit for device 101 on day {input_2}', fontsize = 25)
+plt.ylim(0, 500)
 plt.legend()
 plt.text(1000, 250, f'Direct: {np.round(fitted_dir_eff, 2)}')
 plt.text(1000, 225, f'Diffuse: {np.round(fitted_diff_eff, 2)}')
@@ -611,10 +613,14 @@ IntegratedPower_101_SIM=trapezoid(SimPower_nanless,dx=30) # Find integrated powe
 IntegratedPower_101_kwh_SIM = IntegratedPower_101_SIM/(1000*60**2) # this is the energy in kWh
 print(f'ENERGY SIM      : {np.round(IntegratedPower_101_kwh_SIM, 3)} [kWh]        Day {input_2} of {input_1}')
 
-
-
-
-# print(np.argmin(power_101))
+for i in np.linspace(0, 2880, 40):
+    plt.plot(time_101, SimPower+np.roll(SimPower, i))
+    tick_positions = range(0,len(time_101), 200)
+    plt.xticks(ticks=tick_positions, labels=[time_101[i] for i in tick_positions], rotation = 45, ha='right', fontsize = 10)
+    plt.xlabel('Time of Day', fontsize = 20)
+    plt.ylabel('Power [Watts]', fontsize = 20)
+    plt.title(f'Simulating 2 panels [day 345 2025]')
+    plt.show()
 
 
 

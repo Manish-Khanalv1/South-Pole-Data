@@ -125,7 +125,7 @@ def simulated_power(angle,dir, diff, up):
      
      eff_dir = 0.25  # Assume 15% efficiency
      eff_diff = 0.05  # Assume 5% efficiency for diffuse
-     eff_upwelling = 0.08   # Assume 8% efficiency for upwelling
+     eff_upwelling = 0.05   # Assume 8% efficiency for upwelling
      eff_back = 0.70  # Assume 70% efficiency for back side
      area = 2.0  # Assume 2 square meter panel
      
@@ -329,7 +329,7 @@ ax_right = plt.subplot(2, 2, 4, sharey=ax_left)
 # sim_results = simulated_power(solar_angle, NZDTdir_ir, NZDTdiff_ir, NZDTup_ir)
 plt.plot(NOAA_time, sim_power101, label='Simulated 101', color='blue', linestyle='--')
 plt.plot(NOAA_time, sim_power103, label='Simulated 103', color='green')
-plt.xlabel('Time of the Day')
+plt.xlabel('Time of the Day', fontsize = 25)
 ax = plt.gca()
 start, end = ax.get_xlim() # Get the range of the x-axis (e.g., 0 to N)
 # Select 15 evenly spaced integers across the range
