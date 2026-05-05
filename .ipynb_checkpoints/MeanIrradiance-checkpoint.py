@@ -14,7 +14,7 @@ from numpy import trapezoid
 from scipy.signal import argrelmin
 
 # where you want the data to be taken from and where you want to plots to go
-InputPath = '../../DataFolder'
+InputPath = 'DataFolder'
 OutputPath = 'PlotsFolder/'
 
 
@@ -126,7 +126,7 @@ def Power_And_Irradiance_Mean(year, day):
         #Read the CSV files based on user input
         file_101 = pd.read_csv(f"{InputPath}/spo_dev101_{input_1}_{input_2}.csv",delimiter=',')
         file_103 = pd.read_csv(f"{InputPath}/spo_dev103_{input_1}_{input_2}.csv",delimiter=',')
-        
+
         # Rename the Device ID column to voltage and Voltage to Current
         file_101.rename(columns = {'Device ID': 'V', 'Voltage': 'A'}, inplace=True)
         file_103.rename(columns = {'Device ID': 'V', 'Voltage': 'A'}, inplace=True) # There is a mismatch in the file so voltage column contains current and Device ID contains voltage
@@ -168,8 +168,13 @@ def Power_And_Irradiance_Mean(year, day):
         power_101 = voltage_101 * current_101
         power_103 = voltage_103 * current_103
         # -----------------------------
-        PowerMean = [np.mean(power_101),np.mean(power_103)]
+        print(f'File Loaded {day}')
+        PowerMean = [np.nanmean(power_101),np.nanmean(power_103)]
     except FileNotFoundError:
+        print('File Not Loaded')
+        PowerMean = [np.nan, np.nan]
+    except KeyError:
+        print('File Not Loaded')
         PowerMean = [np.nan, np.nan]
     return [PowerMean,IrrMean]
 
@@ -183,12 +188,15 @@ for day in Day_Range2025:
     Power2025.append(PowerMeanDay)
     Irradiance_Triplet_2025.append(IrradianceMeanDay)
 print(Irradiance_Triplet_2025)
+print()
 print(Power2025)
 
-Direct_Irradiance_2025 = np.array(Irradiance_Triplet_2025)[0::1][0]
+Direct_Irradiance_2025 = np.array(Irradiance_Triplet_2025)[:,0]
 print(Direct_Irradiance_2025)
-plt.plot(Direct_Irradiance_2025)
-plt.show()
-# Power101_2025 = Power2025[0]
-# plt.plot(Day_Range2025,Power101_2025)
+plt.plot(Day_Range2025, Direct_Irradiance_2025)
 # plt.show()
+Power101_2025 = np.array(Power2025)[:,0]
+plt.plot(Day_Range2025,Power101_2025)
+plt.show()
+print(f'len(Direct_Irradiance_2025): {len(Direct_Irradiance_2025)}')
+print(f'len(Power101_2025): {len(Power101_2025)}')
