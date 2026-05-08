@@ -371,6 +371,59 @@ power_103 = voltage_103 * current_103
     
 # method 2: lmfit
 
+# def simulated_power_eff(angle, dir, diff, up, effs):
+#      # effs has shape (eff_dir,eff_dif,eff_upwelling)
+#      eff_dir = effs[0]  
+#      eff_diff = effs[1]  
+#      eff_upwelling = effs[2]   
+#      eff_back = 0.70  # Assume 70% efficiency for back side
+#      area = 2.0  # Assume 2 square meter panel
+
+#     # eff_dir = efficiencies['dir']
+#     # eff_diff = efficiencies['diff']
+#     # eff_upwelling = efficiencies['upwelling']
+#      up = np.array(up)
+#      up = np.linspace(np.mean(up),np.mean(up), len(up))
+     
+     
+#      eff_ir_towards = (abs(angle)*eff_dir*dir + diff*eff_diff + up*eff_upwelling)*area
+#      eff_ir_away = (diff*eff_diff + up*eff_upwelling)*area
+     
+#      power = []
+
+#      # FrontClip = np.max(power_101)
+#      # BackClip = FrontClip
+#      FrontClip = 375
+#      BackClip = 262
+    
+#      #  zip() to loop through the pre-calculated arrays step-by-step
+#      for a, ir_towards, ir_away in zip(angle, eff_ir_towards, eff_ir_away):
+#         if a < 0:
+#             # Sun hits BACK side.
+#             # Back gets the ir_towards and scaled by eff_back
+#             p_instant = np.clip((ir_towards * eff_back),0,BackClip) + np.clip(ir_away,0,145)
+#         else:
+#             # Sun hits FRONT side.
+#             # Front gets ir_towards
+#             p_instant = np.clip((ir_towards),0,FrontClip) + np.clip((ir_away * eff_back),0,112)
+            
+#         power.append(p_instant)
+
+#      # compute for each induvidual power without efficiency
+#      PowerDir = abs(angle)*dir*area
+#      PowerDiff = diff*area*2
+#      PowerUpwelling = up*area*2
+#      # for a, PowerSepTowards, PowerSepAway in zip(angle, )
+#      # power = np.clip(power,0,FrontClip)
+#      return power, (PowerDir,PowerDiff,PowerUpwelling)
+
+
+
+# Testing a sigmoid change from front to back
+
+def sigmoid(x, sharpness, shift):
+    return 1 / (1 + np.exp(-(sharpness)*(x- shift)))
+
 def simulated_power_eff(angle, dir, diff, up, effs):
      # effs has shape (eff_dir,eff_dif,eff_upwelling)
      eff_dir = effs[0]  
@@ -397,17 +450,23 @@ def simulated_power_eff(angle, dir, diff, up, effs):
      BackClip = 262
     
      #  zip() to loop through the pre-calculated arrays step-by-step
-     for a, ir_towards, ir_away in zip(angle, eff_ir_towards, eff_ir_away):
-        if a < 0:
-            # Sun hits BACK side.
-            # Back gets the ir_towards and scaled by eff_back
-            p_instant = np.clip((ir_towards * eff_back),0,BackClip) + np.clip(ir_away,0,145)
-        else:
-            # Sun hits FRONT side.
-            # Front gets ir_towards
-            p_instant = np.clip((ir_towards),0,FrontClip) + np.clip((ir_away * eff_back),0,112)
+     # for a, ir_towards, ir_away in zip(angle, eff_ir_towards, eff_ir_away):
+     #    if a < 0:
+     #        # Sun hits BACK side.
+     #        # Back gets the ir_towards and scaled by eff_back
+     #        p_instant = np.clip((ir_towards * eff_back),0,BackClip) + np.clip(ir_away,0,145)
+     #    else:
+     #        # Sun hits FRONT side.
+     #        # Front gets ir_towards
+     #        p_instant = np.clip((ir_towards),0,FrontClip) + np.clip((ir_away * eff_back),0,112)
             
-        power.append(p_instant)
+     #    power.append(p_instant)
+     shift = 0
+     shift2 = shift + 1440   # ?
+     sharpness = 1
+     power = sigmoid(-angle,sharpness, shift)*sigmoid(angle, sharpness,shift2)*(np.clip((eff_ir_towards * eff_back),0,BackClip) + np.clip(eff_ir_away,0,145)) + sigmoid(angle,sharpness, -shift)*sigmoid(-angle, sharpness,-shift2)*(np.clip((eff_ir_towards),0,FrontClip) + np.clip((eff_ir_away * eff_back),0,112))
+
+     
 
      # compute for each induvidual power without efficiency
      PowerDir = abs(angle)*dir*area
@@ -417,6 +476,7 @@ def simulated_power_eff(angle, dir, diff, up, effs):
      # power = np.clip(power,0,FrontClip)
      return power, (PowerDir,PowerDiff,PowerUpwelling)
 
+# Plotting some sigmoids so I can test things
 
 
 def Sim(time, eff_dir,eff_diff, eff_upwelling):
@@ -445,8 +505,8 @@ params = mod.make_params([.15,.05,.08]) # using the diff and upwelling from edge
 print(mod.param_names,mod.independent_vars)
 
 params['eff_dir'].set(min=0, max=1)     
-params['eff_diff'].set(value=0, vary=False)
-params['eff_upwelling'].set(value=0.04, vary=False)
+params['eff_diff'].set(min=0, max=1)
+params['eff_upwelling'].set(min=0, max=1)
 
 DayArrayPowerLength = len(power_101)
 x = np.arange(0,DayArrayPowerLength,1)
@@ -468,68 +528,68 @@ fitted_upwelling_eff = result.params['eff_upwelling'].value
 
 
 
-# we can do a sperate fit for the edges and comnine them.
+# we can do a sperate fit for the edges and combine them.
 
-mod_edges1 = Model(Sim)
+# mod_edges1 = Model(Sim)
 
-params_edges1 = mod_edges1.make_params([.15,.05,.08])
-# print(mod.param_names,mod.independent_vars)
+# params_edges1 = mod_edges1.make_params([.15,.05,.08])
+# # print(mod.param_names,mod.independent_vars)
 
-params_edges1['eff_dir'].set(min=0, max=.01)     
-params_edges1['eff_diff'].set(min=0,max=1)
-params_edges1['eff_upwelling'].set(min=0, max=1) 
-
-
-# define the range of the minima
-power_101_numpy = power_101.to_numpy()
-indices = argrelmin(power_101_numpy)
-print(f'INDICES OF MIN: {indices}')
-
-MinLoc1 = 579   #Minimum location
-MinLoc2 = MinLoc1 +1440+50
-R = 100            # Radius         range will be [MinLoc1-R:MinLoc1+R]
-
-# do separat fit:
-x_edges1 = np.arange(0,DayArrayPowerLength,1)[MinLoc1-R:MinLoc1+R]
-y_edges1 = power_101[MinLoc1-R:MinLoc1+R]
-
-result_edges1 = mod_edges1.fit(y_edges1, params, time=x_edges1, method='leastsq', nan_policy = 'omit')
+# params_edges1['eff_dir'].set(min=0, max=.01)     
+# params_edges1['eff_diff'].set(min=0,max=1)
+# params_edges1['eff_upwelling'].set(min=0, max=1) 
 
 
-fitted_dir_eff_edges1 = result_edges1.params['eff_dir'].value
-fitted_diff_eff_edges1 = result_edges1.params['eff_diff'].value
-fitted_upwelling_eff_edges1 = result_edges1.params['eff_upwelling'].value
+# # define the range of the minima
+# power_101_numpy = power_101.to_numpy()
+# indices = argrelmin(power_101_numpy)
+# print(f'INDICES OF MIN: {indices}')
 
-# For second edge aswell
-mod_edges2 = Model(Sim)
+# MinLoc1 = 579   #Minimum location
+# MinLoc2 = MinLoc1 +1440+50
+# R = 100            # Radius         range will be [MinLoc1-R:MinLoc1+R]
 
-params_edges2 = mod_edges2.make_params([.15,.05,.08])
-# print(mod.param_names,mod.independent_vars)
+# # do separat fit:
+# x_edges1 = np.arange(0,DayArrayPowerLength,1)[MinLoc1-R:MinLoc1+R]
+# y_edges1 = power_101[MinLoc1-R:MinLoc1+R]
 
-params_edges2['eff_dir'].set(min=0, max=.01)     
-params_edges2['eff_diff'].set(min=0,max=1)
-params_edges2['eff_upwelling'].set(min=0, max=1) 
+# result_edges1 = mod_edges1.fit(y_edges1, params, time=x_edges1, method='leastsq', nan_policy = 'omit')
 
-x_edges2 = np.arange(0,DayArrayPowerLength,1)[MinLoc2-R:MinLoc2+R]
-y_edges2 = power_101[MinLoc2-R:MinLoc2+R]
 
-result_edges2 = mod_edges2.fit(y_edges2, params, time=x_edges2, method='leastsq', nan_policy = 'omit')
+# fitted_dir_eff_edges1 = result_edges1.params['eff_dir'].value
+# fitted_diff_eff_edges1 = result_edges1.params['eff_diff'].value
+# fitted_upwelling_eff_edges1 = result_edges1.params['eff_upwelling'].value
 
-fitted_dir_eff_edges2 = result_edges2.params['eff_dir'].value
-fitted_diff_eff_edges2 = result_edges2.params['eff_diff'].value
-fitted_upwelling_eff_edges2 = result_edges2.params['eff_upwelling'].value
+# # For second edge aswell
+# mod_edges2 = Model(Sim)
+
+# params_edges2 = mod_edges2.make_params([.15,.05,.08])
+# # print(mod.param_names,mod.independent_vars)
+
+# params_edges2['eff_dir'].set(min=0, max=.01)     
+# params_edges2['eff_diff'].set(min=0,max=1)
+# params_edges2['eff_upwelling'].set(min=0, max=1) 
+
+# x_edges2 = np.arange(0,DayArrayPowerLength,1)[MinLoc2-R:MinLoc2+R]
+# y_edges2 = power_101[MinLoc2-R:MinLoc2+R]
+
+# result_edges2 = mod_edges2.fit(y_edges2, params, time=x_edges2, method='leastsq', nan_policy = 'omit')
+
+# fitted_dir_eff_edges2 = result_edges2.params['eff_dir'].value
+# fitted_diff_eff_edges2 = result_edges2.params['eff_diff'].value
+# fitted_upwelling_eff_edges2 = result_edges2.params['eff_upwelling'].value
 
 
 
 # Calculate the simulated power for both edges and regular
 
 SimPower = Sim(np.arange(0,len(power_101),1), fitted_dir_eff,fitted_diff_eff, fitted_upwelling_eff)
-SimPower_edges1 = Sim(np.arange(0,len(power_101),1)[MinLoc1-R:MinLoc1+R], fitted_dir_eff_edges1,fitted_diff_eff_edges1, fitted_upwelling_eff_edges1)
-SimPower_edges2 = Sim(np.arange(0,len(power_101),1)[MinLoc2-R:MinLoc2+R], fitted_dir_eff_edges2,fitted_diff_eff_edges2, fitted_upwelling_eff_edges2)
+# SimPower_edges1 = Sim(np.arange(0,len(power_101),1)[MinLoc1-R:MinLoc1+R], fitted_dir_eff_edges1,fitted_diff_eff_edges1, fitted_upwelling_eff_edges1)
+# SimPower_edges2 = Sim(np.arange(0,len(power_101),1)[MinLoc2-R:MinLoc2+R], fitted_dir_eff_edges2,fitted_diff_eff_edges2, fitted_upwelling_eff_edges2)
 
 # Combine edges and regular:
-SimPower[MinLoc1-R:MinLoc1+R] = SimPower_edges1
-SimPower[MinLoc2-R:MinLoc2+R] = SimPower_edges2
+# SimPower[MinLoc1-R:MinLoc1+R] = SimPower_edges1
+# SimPower[MinLoc2-R:MinLoc2+R] = SimPower_edges2
 
 
 
@@ -569,13 +629,13 @@ plt.text(1000, 250, f'Direct: {np.round(fitted_dir_eff, 2)}')
 plt.text(1000, 225, f'Diffuse: {np.round(fitted_diff_eff, 2)}')
 plt.text(1000, 200, f'Upwelling: {np.round(fitted_upwelling_eff, 2)}')
 
-plt.text(1000, 175, f'Direct Edge 1: {np.round(fitted_dir_eff_edges1, 2)}')
-plt.text(1000, 150, f'Diffuse Edge 1: {np.round(fitted_diff_eff_edges1, 2)}')
-plt.text(1000, 125, f'Upwelling Edge 1: {np.round(fitted_upwelling_eff_edges1, 2)}')
+# plt.text(1000, 175, f'Direct Edge 1: {np.round(fitted_dir_eff_edges1, 2)}')
+# plt.text(1000, 150, f'Diffuse Edge 1: {np.round(fitted_diff_eff_edges1, 2)}')
+# plt.text(1000, 125, f'Upwelling Edge 1: {np.round(fitted_upwelling_eff_edges1, 2)}')
 
-plt.text(1000, 100, f'Direct Edge 2: {np.round(fitted_dir_eff_edges2, 2)}')
-plt.text(1000, 75, f'Diffuse Edge 2: {np.round(fitted_diff_eff_edges2, 2)}')
-plt.text(1000, 50, f'Upwelling Edge 2: {np.round(fitted_upwelling_eff_edges2, 2)}')
+# plt.text(1000, 100, f'Direct Edge 2: {np.round(fitted_dir_eff_edges2, 2)}')
+# plt.text(1000, 75, f'Diffuse Edge 2: {np.round(fitted_diff_eff_edges2, 2)}')
+# plt.text(1000, 50, f'Upwelling Edge 2: {np.round(fitted_upwelling_eff_edges2, 2)}')
 plt.show()
 
 
@@ -613,14 +673,15 @@ IntegratedPower_101_SIM=trapezoid(SimPower_nanless,dx=30) # Find integrated powe
 IntegratedPower_101_kwh_SIM = IntegratedPower_101_SIM/(1000*60**2) # this is the energy in kWh
 print(f'ENERGY SIM      : {np.round(IntegratedPower_101_kwh_SIM, 3)} [kWh]        Day {input_2} of {input_1}')
 
-for i in np.linspace(0, 2880, 40):
-    plt.plot(time_101, SimPower+np.roll(SimPower, i))
-    tick_positions = range(0,len(time_101), 200)
-    plt.xticks(ticks=tick_positions, labels=[time_101[i] for i in tick_positions], rotation = 45, ha='right', fontsize = 10)
-    plt.xlabel('Time of Day', fontsize = 20)
-    plt.ylabel('Power [Watts]', fontsize = 20)
-    plt.title(f'Simulating 2 panels [day 345 2025]')
-    plt.show()
+# simulate 2 panels change angle between them
+# for i in np.linspace(0, 2880, 40):
+#     plt.plot(time_101, SimPower+np.roll(SimPower, i))
+#     tick_positions = range(0,len(time_101), 200)
+#     plt.xticks(ticks=tick_positions, labels=[time_101[i] for i in tick_positions], rotation = 45, ha='right', fontsize = 10)
+#     plt.xlabel('Time of Day', fontsize = 20)
+#     plt.ylabel('Power [Watts]', fontsize = 20)
+#     plt.title(f'Simulating 2 panels [day 345 2025]')
+#     plt.show()
 
 
 
