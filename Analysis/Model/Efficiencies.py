@@ -440,7 +440,7 @@ def simulated_power_eff(angle, dir, diff, up, effs):
      
      
      eff_ir_towards = (abs(angle)*eff_dir*dir + diff*eff_diff + up*eff_upwelling)*area
-     eff_ir_away = (diff*eff_diff + up*eff_upwelling)*area
+     eff_ir_away = (diff*eff_diff + up*eff_upwelling)*area # not irradiance because it is multiplied by area
      
      power = []
 
@@ -672,6 +672,11 @@ print(f'ENERGY REAL DATA: {np.round(IntegratedPower_101_kwh_REALDATA, 3)} [kWh] 
 IntegratedPower_101_SIM=trapezoid(SimPower_nanless,dx=30) # Find integrated power. dx is the period of data taking
 IntegratedPower_101_kwh_SIM = IntegratedPower_101_SIM/(1000*60**2) # this is the energy in kWh
 print(f'ENERGY SIM      : {np.round(IntegratedPower_101_kwh_SIM, 3)} [kWh]        Day {input_2} of {input_1}')
+
+
+
+
+
 
 # simulate 2 panels change angle between them
 # for i in np.linspace(0, 2880, 40):
