@@ -117,6 +117,8 @@ solar_angle =  [np.cos(np.radians(-23.44*np.cos(np.radians(360*((x/1440)+182+int
 solar_angle = np.array(solar_angle) #convert to numpy array
 solar_angle101 = np.concatenate((solar_angle[720:1440],solar_angle[0:720]))
 solar_angle103  = np.concatenate((solar_angle[360:1440],solar_angle[0:360]))
+plt.plot(solar_angle101)
+plt.show()
 
 '''Simulated Power Calculation
 A simple model to simulate power based on solar angle and irradiance
