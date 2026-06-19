@@ -17,27 +17,39 @@ Area = 2.0 #m**2
 baseurl = 'https://gml.noaa.gov/aftp/data/radiation/baseline/spo'
 InputPath = '../../DataFolder'
 OutputPath = 'PlotsFolder/'
-#                     _______________________ 
-#             /|      |- - - - - | - - - - -|
-#            //|      |- - - - - | - - - - -|
-#           // |      |- - - - - | - - - - -|
-#          /| /|      |- - - - - | - - - - -|
-#         //|//|      |__________|__________|
-#        // |/ /      |                     |
-#       |/ /| /|     _|_                   _|_
-#       | //|/_|_
-#       |// /
-#       |/ /
-#       | /
-#       |/
-#       |
-#      _|_
+#                      _______________________ 
+#             /|       |- - - - - | - - - - -|
+#            //|       |- - - - - | - - - - -|
+#           // |       |- - - - - | - - - - -|      ❄️
+#          /| /|       |- - - - - | - - - - -|
+#         //|//| .     |__________|__________|
+#        // |/ /       |                     |
+#       |/ /| /|      _|_                   _|_
+#       | //|/_|_                              .
+#       |// /        .          .                 .
+#       |/ /   .          ❄️              .
+#       | /           .              ❄️
+#       |/  .                 .
+#       |        ❄️                       ❄️        .
+#      _|_            .             .
 
-def model(time, Direct_Irradiance, Diffuse_Irradiance, Upwelling_Irradiance, effs, sharpness, zenith, panel_angle_negative):
+
+
+def sigmoid(x, sharpness, shift):
+    return np.array(1 / (1 + np.exp(-(1/sharpness)*(x + shift))))
+    
+def model(Direct_Irradiance, Diffuse_Irradiance, Upwelling_Irradiance, effs, sharpness, zenith, panel_angle_negative):
+    '''
+    This function 
+    '''
     eff_direct = effs[0]
-    eff_isotropic = effs[1]
+    # eff_isotropic = effs[1]
+    eff_diffuse = effs[1]
+    eff_upwelling = effs[2]
     efficiency_back = .7
 
+    time = np.linspace(0,1440,1440)
+    
     # The angle the math uses to calculate is not the angle which makes sens for us to define our panel angle as so I correct for it as such
     angle_panel = 360 - panel_angle_negative
     Change_Time_1 = angle_panel/360*1440
@@ -56,12 +68,12 @@ def model(time, Direct_Irradiance, Diffuse_Irradiance, Upwelling_Irradiance, eff
     # Total_Directional_Irradiance = Front + Back + Secondary_Front + Secondary_Back
     Total_Directional_Irradiance = Front + Back + Secondary_Front + Secondary_Back + Tertiary_Back + Tertiary_Front
            
-                
+        
     # add directional to the isotropic components:
-    Total_Irradiance = Total_Directional_Irradiance + eff_isotropic*Diffuse_Irradiance + eff_isotropic*Upwelling_Irradiance
+    Total_Irradiance = Total_Directional_Irradiance + eff_diffuse*Diffuse_Irradiance + eff_upwelling*Upwelling_Irradiance
             
     # # Multiply by area to get total power
-    # Total_Power = Total_Irradiance*Area
+    Total_Power = Total_Irradiance*Area
             
     # constraint of device resistor:
             
