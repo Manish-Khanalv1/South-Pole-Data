@@ -95,6 +95,7 @@ def Import_Panel_Data(year, day):
         current_101 = np.array(file_101['A']) 
         power_101 = np.array(voltage_101 * current_101)
     except FileNotFoundError:
+        # date = [np.nan]
         time_101 = [np.nan]
         voltage_101 = [np.nan]
         current_101 = [np.nan]
@@ -115,6 +116,7 @@ def Import_Panel_Data(year, day):
         current_103 = np.array(file_103['A']) 
         power_103 = np.array(voltage_103 * current_103)
     except FileNotFoundError:
+        # date = [np.nan]
         time_103 = [np.nan]
         voltage_103 = [np.nan]
         current_103 = [np.nan]
@@ -125,10 +127,14 @@ def Import_Panel_Data(year, day):
     # -----------------------------
 
     # print(f'len(power_101) = {len(power_101)}')
+    print('v.......v')
+    print(f'date = {date}')
+    print('^.......^')
+    
     return  date, time_101, time_103, voltage_101, voltage_103, current_101, current_103, power_101, power_103
 
 
-day_range = ['345','346','347','348','349','350','351','352','353','354','355','356','357','358','359','360','361','362','363','364','365','001','002','003','004','005','006','007','008','009','010','011','012','013','014','015','016','017','018','019','020','021','022','023','024','025','026']
+day_range = ['345','346','347','348','349','350','351','352','353','354','355','356','357','358','359','360','361','362','363','364','365','001','002','003','004','005','006','007','008','009','010','011','012','013','014','015','016','017','018','019','020','021','022','023','024','025', '026']
 
 
 
@@ -147,17 +153,21 @@ for day in day_range:
     else:
         year = 25
     # Direct_Irradiance, Diffuse_Irradiance, Upwelling_Irradiance, NOAA_time = Import_NOAA_Data(year,day)
-    date, time_101_og, time_103_og, voltage_101_og, voltage_103_og, current_101_og, current_103_og, power_101_og, power_103_og = Import_Panel_Data(year, day)
+    date_og, time_101_og, time_103_og, voltage_101_og, voltage_103_og, current_101_og, current_103_og, power_101_og, power_103_og = Import_Panel_Data(year, day)
+
+    # date_101 = np.repeat(date, 2880)
+    date = np.pad(date_og, pad_width = (0, 2880 - len(time_101_og)), constant_values = np.nan)
+    # date = date_og
     time_101 = np.pad(time_101_og, pad_width = (0, 2880 - len(time_101_og)), constant_values = np.nan)
     time_103 = np.pad(time_103_og, pad_width = (0, 2880 - len(time_103_og)), constant_values = np.nan)
     voltage_101 = np.pad(voltage_101_og, pad_width = (0, 2880 - len(voltage_101_og)), constant_values = np.nan)
     voltage_103 = np.pad(voltage_103_og, pad_width = (0, 2880 - len(voltage_103_og)), constant_values = np.nan)
     current_101 = np.pad(current_101_og, pad_width = (0, 2880 - len(current_101_og)), constant_values = np.nan)
     current_103 = np.pad(current_103_og, pad_width = (0, 2880 - len(current_103_og)), constant_values = np.nan)
-    power_101 = np.pad(power_101_og, pad_width = (0, 2880 - len(power_101_og)), constant_values = np.nan)
-    power_103_= np.pad(power_103_og, pad_width = (0, 2880 - len(power_103_og)), constant_values = np.nan)
+    power_101 = np.pad(power_101_og, pad_width = (0, 2880 - len(power_101_og)-1), constant_values = np.nan)
+    power_103_= np.pad(power_103_og, pad_width = (0, 2880 - len(power_103_og)-1), constant_values = np.nan)
     
-    all_dates_101.append(date)
+    all_dates_101.append(np.array(date))
     all_times_101.append(time_101)
     all_voltages_101.append(voltage_101)
     all_currents_101.append(current_101)
@@ -194,6 +204,37 @@ for day in day_range:
     # print(Direct_Irradiance)
 
 
+print(len(all_dates_101))
+print(len(all_dates_101[0]))
+print(len(all_dates_101[0][0]))
+print(len(all_dates_101[0][0][0]))
+print(len(all_dates_101[0][0][0][0]))
 
-data_101 = [all_dates_101, all_times_101, all_voltages_101, all_currents_101, all_powers_101]
-print(data_101)
+
+
+numpy_all_dates_101 = np.array(all_dates_101)
+numpy_all_times_101 = np.array(all_times_101)
+numpy_all_voltages_101 = np.array(all_voltages_101)
+numpy_all_currents_101 = np.array(all_currents_101)
+numpy_all_powers_101 = np.array(all_powers_101)
+
+
+data_101 = [numpy_all_dates_101, numpy_all_times_101, numpy_all_voltages_101, numpy_all_currents_101, numpy_all_powers_101]
+print()
+print()
+print()
+print(len(data_101[0]))
+print(len(data_101[1]))
+print(len(data_101[2]))
+print(len(data_101[3]))
+print(len(data_101[4]))
+# print(len(data_101[5]))
+print()
+print()
+print()
+
+
+
+numpy_data_101 = np.array(data_101)
+
+np.save('All_Data_101.npy', numpy_data_101)
