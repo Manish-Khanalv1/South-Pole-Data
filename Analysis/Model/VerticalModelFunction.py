@@ -56,7 +56,7 @@ def model(Direct_Irradiance, Diffuse_Irradiance, Upwelling_Irradiance, effs, sha
     Change_Time_2 = Change_Time_1 + 1440/2
     Angular_Dependance_Front = np.array(np.cos(np.pi/(Change_Time_2 - Change_Time_1)*(time - (Change_Time_1 + Change_Time_2)/2))*np.cos((90-zenith)*np.pi/180))
     Angular_Dependance_Back = np.array(-Angular_Dependance_Front)
-            
+    
     # create front of panel simulation (I did tricky math to get these)
     # Directional components:
     Front = eff_direct*Direct_Irradiance*Angular_Dependance_Front*sigmoid(time, sharpness, -Change_Time_1)*sigmoid(-time, sharpness, Change_Time_2)
@@ -67,7 +67,7 @@ def model(Direct_Irradiance, Diffuse_Irradiance, Upwelling_Irradiance, effs, sha
     Tertiary_Back = .7*eff_direct*Direct_Irradiance*Angular_Dependance_Back*sigmoid(time, sharpness, -Change_Time_2+4*Change_Time_2-4*Change_Time_1)*sigmoid(-time, sharpness, 2*Change_Time_2 - Change_Time_1-(+4*Change_Time_2-4*Change_Time_1))
     # Total_Directional_Irradiance = Front + Back + Secondary_Front + Secondary_Back
     Total_Directional_Irradiance = Front + Back + Secondary_Front + Secondary_Back + Tertiary_Back + Tertiary_Front
-           
+    
         
     # add directional to the isotropic components:
     Total_Irradiance = Total_Directional_Irradiance + eff_diffuse*Diffuse_Irradiance + eff_upwelling*Upwelling_Irradiance
