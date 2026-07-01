@@ -1,6 +1,33 @@
+import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon
+import numpy as np
+import matplotlib.animation as animation
+import matplotlib.gridspec as gridspec
+import pandas as pd
+from datetime import datetime, timedelta
+import matplotlib.dates as mdates
+import os
+import urllib.request
+import random
+from scipy.optimize import curve_fit
+from scipy.interpolate import interp1d
+from numpy import trapezoid
+from scipy.signal import argrelmin
+import seaborn as sns
+import math
+# import datetime
+
+
+
+# Global Variables
+Area = 2.0 #m**2
+baseurl = 'https://gml.noaa.gov/aftp/data/radiation/baseline/spo'
+InputPath = '../../DataFolder'
+OutputPath = 'PlotsFolder/'
+
 # import NOAA data function
 def Import_NOAA_Data(year, day):
-    baseurl = 'https://gml.noaa.gov/aftp/data/radiation/baseline/spo'
+    
     
     input_1 = year
     input_2 = day
@@ -115,8 +142,8 @@ def Import_Panel_Data(year, day):
     input_2 = day
     # --------REAL PANEL DATA-------------
     #Read the CSV files based on user input
-    file_101 = pd.read_csv(f"../DataFolder/spo_dev101_{input_1}_{input_2}.csv",delimiter=',')
-    file_103 = pd.read_csv(f"../DataFolder/spo_dev103_{input_1}_{input_2}.csv",delimiter=',')
+    file_101 = pd.read_csv(f"../../DataFolder/spo_dev101_{input_1}_{input_2}.csv",delimiter=',')
+    file_103 = pd.read_csv(f"../../DataFolder/spo_dev103_{input_1}_{input_2}.csv",delimiter=',')
     
     # Rename the Device ID column to voltage and Voltage to Current
     file_101.rename(columns = {'Device ID': 'V', 'Voltage': 'A'}, inplace=True)
